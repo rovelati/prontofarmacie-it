@@ -1,0 +1,51 @@
+---
+import {
+  buildGuardiaMedicaTeaser,
+  guardiaMedicaPageUrl,
+  type GuardiaMedicaLocation,
+} from '@/lib/guardiaMedica';
+
+interface Props extends GuardiaMedicaLocation {
+  citySlug?: string | null;
+}
+
+const { city = null, provinceCode = null } = Astro.props;
+const location: GuardiaMedicaLocation = { city, provinceCode };
+const teaser = buildGuardiaMedicaTeaser(location);
+const pageUrl = guardiaMedicaPageUrl(import.meta.env);
+---
+
+<section
+  class="mt-8 rounded-xl border border-sky-100 bg-sky-50/50 px-5 py-4 dark:border-sky-800 dark:bg-sky-950 sm:px-6"
+  aria-label="Link guida ricetta e Continuità Assistenziale"
+>
+  <p class="text-sm font-medium text-gray-900 dark:text-sky-50">Ti serve una ricetta per un farmaco?</p>
+  <p class="mt-1 text-sm leading-6 text-gray-600 dark:text-sky-100/90">
+    {
+      teaser.callHref && teaser.phoneDisplay ? (
+        <>
+          {teaser.summaryBefore}
+          <a
+            href={teaser.callHref}
+            class="font-bold text-sky-900 underline decoration-sky-400/70 underline-offset-2 hover:text-sky-950 dark:text-sky-100 dark:hover:text-white"
+            data-ga-event="cta_call"
+            data-ga-label={`ricetta_${teaser.phoneDisplay}`}
+          >
+            {teaser.phoneDisplay}
+          </a>
+          {teaser.summaryAfter}
+        </>
+      ) : (
+        teaser.summary
+      )
+    }
+  </p>
+  <a
+    href={pageUrl}
+    class="mt-2 inline-flex text-sm font-semibold text-sky-800 hover:text-sky-950 hover:underline dark:text-sky-300 dark:hover:text-sky-200"
+    data-ga-event="cta_ricetta_guide"
+    data-ga-label={teaser.linkLabel}
+  >
+    {teaser.linkLabel} →
+  </a>
+</section>

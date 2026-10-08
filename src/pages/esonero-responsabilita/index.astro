@@ -1,0 +1,29 @@
+---
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import { siteUrl } from '@/lib/turni';
+
+const title = 'Esonero Responsabilità | ProntoFarmacie';
+const description = 'Dichiarazione di esonero di responsabilità per l\'utilizzo del sito ProntoFarmacie.it.';
+const canonical = `${siteUrl(import.meta.env)}/esonero-responsabilita/`;
+---
+
+<BaseLayout title={title} description={description} canonical={canonical}>
+  <main class="mx-auto max-w-4xl px-4 py-12 md:py-20">
+    <div class="rounded-3xl border border-gray-100 bg-white p-8 md:p-16 shadow-sm">
+      <h1 class="text-3xl font-extrabold text-gray-900 md:text-4xl">Esonero di responsabilità</h1>
+      <div class="prose prose-emerald mt-10 max-w-none text-gray-700">
+        <p>
+          ProntoFarmacie.it fornisce dati e informazioni raccolte da fonti web riguardanti le farmacie italiane.
+          I contenuti sono offerti al solo scopo informativo e non costituiscono consulenza professionale.
+        </p>
+        <p>
+          Non garantiamo l'accuratezza, la completezza o l'affidabilità delle informazioni e decliniamo ogni
+          responsabilità per errori o omissioni. Per informazioni specifiche contatta direttamente la farmacia.
+        </p>
+        <p>
+          I link verso siti terzi sono forniti per comodità; l'accesso avviene sotto la responsabilità dell'utente.
+        </p>
+      </div>
+    </div>
+  </main>
+</BaseLayout>

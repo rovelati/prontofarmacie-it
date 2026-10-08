@@ -1,0 +1,29 @@
+---
+import BrandWordmark from '@/components/BrandWordmark.astro';
+
+const year = new Date().getFullYear();
+
+const footerLinks = [
+  { href: '/#chi-siamo', label: 'Chi siamo' },
+  { href: '/credits/', label: 'Crediti' },
+  { href: '/contact/', label: 'Contatti' },
+  { href: '/esonero-responsabilita/', label: 'Esonero responsabilità' },
+  { href: '/area-farmacia/', label: 'Area farmacia' },
+  { href: '/lavoro/area-candidati/', label: 'Area candidati' },
+  { href: '/pronto-farmacie-dalla-parte-dei-farmacisti/', label: 'Per farmacisti' },
+  { href: '/shop-reclami/', label: 'Reclami shop' },
+  { href: '/ricerca', label: 'Ricerca' },
+];
+---
+
+<footer class="mt-16 border-t border-gray-200 bg-white dark:border-slate-700 dark:bg-slate-900">
+  <div class="mx-auto max-w-6xl px-4 py-10 sm:px-6">
+    <BrandWordmark class="mb-6" markSize={32} />
+    <nav class="flex flex-wrap gap-x-6 gap-y-2 text-sm text-gray-600 dark:text-slate-300">
+      {footerLinks.map((item) => (
+        <a href={item.href} class="hover:text-emerald-700 dark:hover:text-emerald-300">{item.label}</a>
+      ))}
+    </nav>
+    <p class="mt-6 text-sm text-gray-500 dark:text-slate-400">© {year} ProntoFarmacie.it — farmacie di turno, schede e lavoro in farmacia.</p>
+  </div>
+</footer>

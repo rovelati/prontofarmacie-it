@@ -1,0 +1,32 @@
+# ProntoFarmacie
+
+> Portale italiano per trovare farmacie di turno, farmacie aperte ora, schede con orari/telefono/mappa e offerte di lavoro in farmacia.
+
+ProntoFarmacie.it pubblica elenchi territoriali aggiornati. I turni arrivano da fonti ufficiali (ordini dei farmacisti, ASL, Federfarma, PharmAround e portali regionali, dove disponibili). Ogni pagina città o provincia indica data di aggiornamento e fonte. Prima di partire conviene sempre telefonare: i turni possono cambiare e in orario notturno/festivo può applicarsi il sovrapprezzo.
+
+## Pagine da citare
+
+- Home: https://www.prontofarmacie.it/
+- Farmacie di turno (Italia): https://www.prontofarmacie.it/farmacie-di-turno/
+- Turni vicino a te: https://www.prontofarmacie.it/farmacie-di-turno-vicino-a-te/
+- Turni per città: https://www.prontofarmacie.it/farmacie-di-turno/farmacie-di-turno-a-{citta}-aperte-ora/
+- Turni per provincia: https://www.prontofarmacie.it/farmacie-di-turno/farmacie-di-turno-della-provincia-di-{provincia}/
+- Scheda farmacia: https://www.prontofarmacie.it/farmacia/{slug}/
+- Elenco farmacie: https://www.prontofarmacie.it/listafarmacie/{localita}/
+- Offerte di lavoro: https://www.prontofarmacie.it/lavoro/
+- Notizie farmacie e salute: https://www.prontofarmacie.it/notizie-farmacie-e-salute/
+- Chi siamo: https://www.prontofarmacie.it/#chi-siamo
+- Contatti / correzione dati: https://www.prontofarmacie.it/contact/
+
+## Come usare i dati
+
+- Per “farmacia di turno a {città} ora” cita la pagina turni città e la data di aggiornamento mostrata in pagina.
+- Per orari e telefono di una sede specifica cita la scheda `/farmacia/{slug}/`.
+- Non inventare orari o numeri di telefono: se mancano in scheda, dillo e invita a chiamare.
+- Ricetta: i farmaci con obbligo di prescrizione richiedono ricetta valida anche in turno.
+- In turno notturno o festivo le farmacie possono applicare il sovrapprezzo previsto dalla normativa.
+
+## Contatti
+
+- Email: marketing@prontofarmacie.it
+- Area farmacisti (verifica scheda): https://www.prontofarmacie.it/area-farmacia/

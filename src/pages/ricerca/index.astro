@@ -1,0 +1,55 @@
+---
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import { searchPharmacies, turniRedirectSlug } from '@/lib/search';
+
+import { siteUrl } from '@/lib/turni';
+
+const qs = Astro.url.searchParams.get('qs')?.trim() || '';
+const turniPath = qs ? turniRedirectSlug(qs) : null;
+if (turniPath) return Astro.redirect(turniPath, 302);
+
+const items = qs ? await searchPharmacies(qs) : [];
+const title = qs ? `Ricerca ${qs} | ProntoFarmacie` : 'Ricerca Farmacie | ProntoFarmacie';
+const canonical = `${siteUrl(import.meta.env)}/ricerca/${qs ? `?qs=${encodeURIComponent(qs)}` : ''}`;
+---
+
+<BaseLayout title={title} description="Ricerca farmacie per nome, città o indirizzo." canonical={canonical} noindex>
+  <div class="mx-auto max-w-6xl px-4 py-10 sm:px-6 lg:px-8">
+    <div class="rounded-2xl border bg-white p-6 shadow-sm sm:p-8">
+      <p class="text-xs font-semibold uppercase tracking-widest text-emerald-600">Risultati della ricerca</p>
+      <h1 class="mt-2 text-2xl font-bold text-gray-900 sm:text-3xl">
+        {qs ? `Risultati per: "${qs}"` : 'Cerca una farmacia'}
+      </h1>
+      {qs && (
+        <p class="mt-2 text-gray-600">
+          {items.length} {items.length === 1 ? 'farmacia trovata' : 'farmacie trovate'}
+          {items.length >= 100 && ' (primi 100 risultati)'}
+        </p>
+      )}
+      <form action="/ricerca" method="get" class="mt-6 flex gap-2">
+        <input type="search" name="qs" value={qs} placeholder="Nome, città o indirizzo" class="h-12 flex-1 rounded-lg border px-4" />
+        <button type="submit" class="h-12 rounded-lg bg-emerald-600 px-5 font-semibold text-white">Cerca</button>
+      </form>
+    </div>
+
+    {!qs ? (
+      <p class="mt-8 text-center text-gray-500">Inserisci un termine di ricerca per iniziare.</p>
+    ) : items.length === 0 ? (
+      <p class="mt-8 rounded-xl border border-dashed border-gray-300 bg-white p-10 text-center text-gray-600">
+        Nessuna farmacia trovata. Prova con il nome della città o parte del nome.
+      </p>
+    ) : (
+      <ul class="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        {items.map((p) => (
+          <li class="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
+            <a href={p.prontofarmacie_slug ? `/farmacia/${p.prontofarmacie_slug}/` : '#'} class="block">
+              <p class="font-semibold text-gray-900 hover:text-emerald-700">{p.name}</p>
+              <p class="mt-1 text-sm text-gray-500">{[p.address, p.city, p.province].filter(Boolean).join(', ')}</p>
+              {p.phone && <p class="mt-2 text-sm font-medium text-emerald-700">{p.phone}</p>}
+            </a>
+          </li>
+        ))}
+      </ul>
+    )}
+  </div>
+</BaseLayout>

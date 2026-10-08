@@ -1,0 +1,42 @@
+---
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import OfferteDiOggiPanel from '@/components/shop/OfferteDiOggiPanel.jsx';
+import {
+  fetchShopOfferCategoriesForDate,
+  fetchShopOffersForDate,
+  getShopBySlug,
+  resolveShopOfferDate,
+} from '@/lib/shop';
+import { siteUrl } from '@/lib/turni';
+
+const { slug } = Astro.params;
+if (!slug) return Astro.redirect('/shops/offerte-di-oggi/', 302);
+
+const shop = getShopBySlug(slug);
+if (!shop) {
+  Astro.response.status = 404;
+  return Astro.rewrite('/404');
+}
+
+const title = `Offerte odierne ${shop.name} | ProntoFarmacie`;
+const description = `Promozioni e sconti del giorno su ${shop.name}.`;
+const canonical = `${siteUrl(import.meta.env)}/shop/${shop.slug}/offerte-odierne/`;
+const offerDate = await resolveShopOfferDate();
+const [initialOffers, initialCategories] = await Promise.all([
+  fetchShopOffersForDate({ shopSlug: shop.slug }, offerDate),
+  fetchShopOfferCategoriesForDate(offerDate, shop.slug),
+]);
+---
+
+<BaseLayout title={title} description={description} canonical={canonical}>
+  <OfferteDiOggiPanel
+    shopSlug={shop.slug}
+    shopName={shop.name}
+    backHref={`/shop/${shop.slug}/`}
+    backLabel={shop.name}
+    initialOffers={initialOffers}
+    initialCategories={initialCategories}
+    initialOfferDate={offerDate}
+    client:load
+  />
+</BaseLayout>

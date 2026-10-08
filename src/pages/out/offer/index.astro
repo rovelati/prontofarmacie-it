@@ -1,0 +1,12 @@
+---
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import OffertaRedirect from '@/components/shop/OffertaRedirect.jsx';
+import { siteUrl } from '@/lib/turni';
+
+const title = 'Reindirizzamento offerta | ProntoFarmacie';
+const canonical = `${siteUrl(import.meta.env)}/out/offer/`;
+---
+
+<BaseLayout title={title} description="Redirect verso offerta shop esterno." canonical={canonical} noindex>
+  <OffertaRedirect client:only="react" />
+</BaseLayout>

@@ -1,0 +1,41 @@
+---
+interface Props {
+  action: string;
+  inputName?: string;
+  label?: string;
+  placeholder?: string;
+  buttonLabel?: string;
+  required?: boolean;
+  method?: 'get' | 'post';
+}
+
+const {
+  action,
+  inputName = 'q',
+  label,
+  placeholder = 'Cerca città, provincia o farmacia...',
+  buttonLabel = 'Cerca',
+  required = false,
+  method = 'get',
+} = Astro.props;
+---
+
+<form action={action} method={method} class="rounded-2xl bg-white p-3 shadow-2xl ring-1 ring-white/70">
+  {label && <label for={`${inputName}-search`} class="mb-2 block px-2 text-sm font-semibold text-gray-800">{label}</label>}
+  <div class="flex flex-col gap-3 sm:flex-row">
+    <input
+      id={`${inputName}-search`}
+      type="search"
+      name={inputName}
+      placeholder={placeholder}
+      required={required}
+      class="min-h-[52px] w-full flex-1 appearance-none rounded-xl border border-gray-200 bg-white px-4 text-base font-medium leading-none text-gray-900 placeholder:text-gray-500 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-300 sm:min-h-14"
+    />
+    <button
+      type="submit"
+      class="min-h-[52px] shrink-0 rounded-xl bg-gray-900 px-8 text-base font-semibold text-white hover:bg-gray-800 sm:min-h-14"
+    >
+      {buttonLabel}
+    </button>
+  </div>
+</form>

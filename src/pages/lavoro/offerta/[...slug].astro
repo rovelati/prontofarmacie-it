@@ -1,0 +1,311 @@
+---
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import SectionHero from '@/components/SectionHero.astro';
+import JobApplicationCta from '@/components/jobs/JobApplicationCta.astro';
+import MarketplaceSignupCta from '@/components/marketplace/MarketplaceSignupCta.astro';
+import JobsMapIsland from '@/components/JobsMapIsland';
+import { buildBreadcrumbJsonLd } from '@/lib/seo';
+import {
+  buildJobApplicationMailto,
+  buildJobPostingJsonLd,
+  fetchJobById,
+  formatJobDescriptionHtml,
+  formatJobPostedDate,
+  jobDetailPath,
+  jobPharmacyDetailHref,
+  resolveJobApplicationContact,
+} from '@/lib/jobs';
+import { jobDetailPathFromSlug, normalizeJobSlug } from '@/lib/jobSlug';
+import { geocodeQuery } from '@/lib/geocode';
+import { siteUrl, slugifySegment } from '@/lib/turni';
+
+const rawSlug = Astro.params.slug;
+if (!rawSlug) return Astro.redirect('/lavoro/', 302);
+
+const jobSlug = normalizeJobSlug(rawSlug);
+const canonicalPath = jobDetailPathFromSlug(jobSlug);
+const currentPath = Astro.url.pathname.endsWith('/') ? Astro.url.pathname : `${Astro.url.pathname}/`;
+if (currentPath !== canonicalPath) {
+  return Astro.redirect(canonicalPath, 301);
+}
+
+const job = await fetchJobById(jobSlug);
+if (!job) {
+  Astro.response.status = 404;
+  return Astro.rewrite('/404');
+}
+
+const title = `${job.title_seo || job.title} | ProntoFarmacie`;
+const description = (job.excerpt || '').replace(/<[^>]+>/g, '').slice(0, 160);
+const base = siteUrl(import.meta.env);
+const canonical = `${base}${jobDetailPath(job)}`;
+const html = await formatJobDescriptionHtml(job.description_enriched_html || job.description_html || job.excerpt);
+const location = [job.pharmacy?.city, job.pharmacy?.province].filter(Boolean).join(' · ');
+const meta = [job.pharmacy?.name, location, job.contract_type, job.category].filter(Boolean).join(' · ');
+const phoneHref = job.pharmacy?.phone ? `tel:${String(job.pharmacy.phone).replace(/\D/g, '')}` : null;
+let lat = job.pharmacy?.latitude != null ? Number(job.pharmacy.latitude) : null;
+let lng = job.pharmacy?.longitude != null ? Number(job.pharmacy.longitude) : null;
+let hasCoordinates = lat != null && lng != null && Number.isFinite(lat) && Number.isFinite(lng);
+if (!hasCoordinates) {
+  const geoQuery = [job.pharmacy?.name, job.pharmacy?.address, job.pharmacy?.city, 'Italia']
+    .filter(Boolean)
+    .join(', ');
+  const geo = geoQuery ? await geocodeQuery(geoQuery) : null;
+  if (geo) {
+    lat = geo.lat;
+    lng = geo.lng;
+    hasCoordinates = true;
+  }
+}
+const addressQuery = [job.pharmacy?.name, job.pharmacy?.address, job.pharmacy?.city, job.pharmacy?.province]
+  .filter(Boolean)
+  .join(', ');
+const mapQuery = hasCoordinates ? `${lat},${lng}` : addressQuery;
+const mapDirectionsUrl = job.pharmacy?.maps_url || (mapQuery ? `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(mapQuery)}` : '');
+const mapPoint = hasCoordinates
+  ? [{
+      lat: lat!,
+      lng: lng!,
+      id: String(job.id),
+      title: job.title_seo || job.title,
+      city: job.pharmacy?.city || '',
+      pharmacyName: job.pharmacy?.name || '',
+      detailLink: jobDetailPath(job),
+    }]
+  : [];
+const postedDate = formatJobPostedDate(job.date_posted);
+const applicationContact = resolveJobApplicationContact(job);
+const applicationMailto = applicationContact.email
+  ? buildJobApplicationMailto(job, applicationContact.email)
+  : null;
+const citySlug = job.pharmacy?.city ? slugifySegment(job.pharmacy.city) : '';
+const moreJobsHref = citySlug ? `/lavoro/${citySlug}/tutte/` : '/lavoro/';
+const pharmacyHref = jobPharmacyDetailHref(job);
+const jsonLd = [
+  buildBreadcrumbJsonLd([
+    { name: 'Home', url: `${base}/` },
+    { name: 'Lavoro', url: `${base}/lavoro/` },
+    { name: job.title_seo || job.title, url: canonical },
+  ]),
+  buildJobPostingJsonLd({
+    job,
+    descriptionHtml: html,
+    canonicalUrl: canonical,
+    lat,
+    lng,
+    hasCoordinates,
+    directApply: Boolean(applicationMailto),
+  }),
+];
+---
+
+<BaseLayout title={title} description={description} canonical={canonical} jsonLd={jsonLd}>
+  <SectionHero
+    eyebrow="Offerta di lavoro"
+    title={job.title_seo || job.title}
+    description={meta}
+    compact
+  />
+
+  <article
+    class:list={[
+      'mx-auto max-w-6xl px-4 pt-4 sm:px-6 sm:pt-6 lg:px-8',
+      applicationMailto ? 'pb-24 lg:pb-10' : 'pb-10',
+    ]}
+  >
+    <nav class="mb-3 text-sm text-gray-500">
+      <a href="/lavoro/" class="hover:text-emerald-700">Lavoro</a>
+      <span class="mx-1.5">/</span>
+      {citySlug ? (
+        <>
+          <a href={moreJobsHref} class="hover:text-emerald-700">{job.pharmacy?.city || 'Città'}</a>
+          <span class="mx-1.5">/</span>
+        </>
+      ) : null}
+      <span class="text-gray-700">Annuncio</span>
+    </nav>
+
+    {/* Fatti utili subito: contratto / ruolo / data — non CTA da scheda farmacia */}
+    <div class="mb-4 flex flex-wrap gap-2">
+      {job.contract_type && (
+        <span class="rounded-full bg-emerald-50 px-3 py-1.5 text-xs font-semibold text-emerald-800 dark:bg-emerald-950 dark:text-emerald-200">
+          {job.contract_type}
+        </span>
+      )}
+      {job.category && (
+        <span class="rounded-full bg-slate-100 px-3 py-1.5 text-xs font-semibold text-slate-700 dark:bg-slate-800 dark:text-slate-200">
+          {job.category}
+        </span>
+      )}
+      {postedDate && (
+        <span class="rounded-full bg-slate-100 px-3 py-1.5 text-xs font-medium text-slate-600 dark:bg-slate-800 dark:text-slate-300">
+          Pubblicata il {postedDate}
+        </span>
+      )}
+      {location && (
+        <span class="rounded-full bg-slate-100 px-3 py-1.5 text-xs font-medium text-slate-600 dark:bg-slate-800 dark:text-slate-300">
+          {location}
+        </span>
+      )}
+    </div>
+
+    <div class="grid gap-6 lg:grid-cols-[minmax(0,1fr)_320px] lg:items-start lg:gap-8">
+      <div class="space-y-5">
+        <section class="section-card">
+          <h2 class="text-lg font-semibold text-gray-900">Descrizione dell&apos;offerta</h2>
+          {html ? (
+            <div class="job-description mt-4" set:html={html} />
+          ) : (
+            <p class="mt-4 text-gray-700">
+              Descrizione non disponibile. Controlla la fonte originale o contatta la farmacia dopo aver letto i dettagli utili.
+            </p>
+          )}
+        </section>
+
+        <div id="candidati">
+          <JobApplicationCta job={job} contact={applicationContact} />
+        </div>
+
+        {/* Sede / mappa / telefono: solo dopo che l’utente ha letto l’annuncio */}
+        <section id="sede" class="section-card scroll-mt-6 overflow-hidden p-0">
+          <div class:list={[mapPoint.length > 0 ? 'grid lg:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)]' : '']}>
+            <div class="p-5 sm:p-6">
+              <p class="text-xs font-semibold uppercase tracking-wide text-emerald-600">Sede di lavoro</p>
+              <h2 class="mt-2 text-xl font-bold text-gray-900">
+                {pharmacyHref ? (
+                  <a href={pharmacyHref} class="hover:text-emerald-700 hover:underline">
+                    {job.pharmacy?.name || 'Farmacia'}
+                  </a>
+                ) : (
+                  job.pharmacy?.name || 'Farmacia'
+                )}
+              </h2>
+              {job.pharmacy?.address && <p class="mt-2 text-sm text-gray-700">{job.pharmacy.address}</p>}
+              {location && <p class="mt-1 text-sm font-medium text-gray-500">{location}</p>}
+              <p class="mt-4 text-sm text-gray-600">
+                Ti interessa l&apos;offerta? Qui puoi chiamare o aprire la mappa.
+              </p>
+              <div class="mt-4 flex flex-wrap gap-2">
+                {pharmacyHref && (
+                  <a
+                    href={pharmacyHref}
+                    class="inline-flex rounded-full bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-emerald-700"
+                  >
+                    Scheda farmacia
+                  </a>
+                )}
+                {phoneHref && (
+                  <a
+                    href={phoneHref}
+                    class="inline-flex rounded-full border border-gray-300 bg-white px-4 py-2.5 text-sm font-semibold text-gray-800 hover:bg-gray-50 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100"
+                  >
+                    Chiama farmacia
+                  </a>
+                )}
+                {mapDirectionsUrl && (
+                  <a
+                    href={mapDirectionsUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    class="inline-flex rounded-full border border-gray-300 bg-white px-4 py-2.5 text-sm font-semibold text-gray-800 hover:bg-gray-50 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100"
+                  >
+                    Indicazioni stradali
+                  </a>
+                )}
+              </div>
+            </div>
+            {mapPoint.length > 0 && (
+              <div class="relative min-h-[240px] border-t border-gray-100 lg:min-h-[320px] lg:border-l lg:border-t-0">
+                <JobsMapIsland
+                  client:only="react"
+                  points={mapPoint}
+                  highlightId={String(job.id)}
+                  openPopupId={String(job.id)}
+                  showLegend
+                />
+              </div>
+            )}
+          </div>
+        </section>
+      </div>
+
+      <aside class="hidden space-y-4 lg:sticky lg:top-24 lg:block">
+        <div class="section-card">
+          <h2 class="text-lg font-semibold text-gray-900">Candidati</h2>
+          <p class="mt-2 text-sm text-gray-600">Dopo aver letto l&apos;annuncio, invia il CV o apri la fonte originale.</p>
+          <div class="mt-4 grid gap-2">
+            {applicationMailto ? (
+              <a
+                href={applicationMailto}
+                class="rounded-xl bg-emerald-600 px-4 py-3 text-center text-sm font-semibold text-white hover:bg-emerald-700"
+              >
+                Invia CV via email
+              </a>
+            ) : (
+              <a
+                href="#candidati"
+                class="rounded-xl bg-emerald-600 px-4 py-3 text-center text-sm font-semibold text-white hover:bg-emerald-700"
+              >
+                Come candidarsi
+              </a>
+            )}
+            {applicationContact.sourceSiteUrl && applicationContact.sourceSiteLabel && (
+              <a
+                href={applicationContact.sourceSiteUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                class="rounded-xl border border-gray-200 px-4 py-3 text-center text-sm font-semibold text-gray-700 hover:border-emerald-300"
+              >
+                {job.source_url ? 'Annuncio originale' : `Fonte: ${applicationContact.sourceSiteLabel}`}
+              </a>
+            )}
+            <a href="#sede" class="rounded-xl border border-gray-200 px-4 py-3 text-center text-sm font-semibold text-gray-600 hover:border-emerald-300">
+              Sede e mappa
+            </a>
+            {pharmacyHref && (
+              <a
+                href={pharmacyHref}
+                class="rounded-xl border border-emerald-200 px-4 py-3 text-center text-sm font-semibold text-emerald-800 hover:bg-emerald-50"
+              >
+                Scheda farmacia su ProntoFarmacie
+              </a>
+            )}
+          </div>
+        </div>
+      </aside>
+    </div>
+
+    <div class="mt-10 space-y-6 border-t border-gray-200 pt-8">
+      <div class="flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <p class="text-xs font-semibold uppercase tracking-wide text-gray-500">Altre opportunità</p>
+          <h2 class="mt-1 text-lg font-semibold text-gray-900">Hai già valutato questa offerta?</h2>
+        </div>
+        <a
+          href={moreJobsHref}
+          class="inline-flex rounded-full border border-emerald-200 px-4 py-2 text-sm font-semibold text-emerald-800 hover:bg-emerald-50 dark:border-emerald-700 dark:text-emerald-300 dark:hover:bg-emerald-950"
+        >
+          {job.pharmacy?.city ? `Altre offerte a ${job.pharmacy.city}` : 'Tutte le offerte'}
+        </a>
+      </div>
+
+      <MarketplaceSignupCta
+        audience="job_seeker"
+        title="Vuoi altre offerte come questa?"
+        lead="Attiva gli alert: ti avvisiamo solo quando esce qualcosa di pertinente."
+      />
+    </div>
+  </article>
+
+  {/* Mobile: CTA candidatura sticky dopo lo scroll, non in hero */}
+  {applicationMailto && (
+    <div class="fixed inset-x-0 bottom-0 z-40 border-t border-emerald-200/80 bg-white/95 p-3 backdrop-blur dark:border-emerald-800 dark:bg-slate-950/95 lg:hidden">
+      <a
+        href={applicationMailto}
+        class="flex w-full items-center justify-center rounded-xl bg-emerald-600 px-4 py-3 text-sm font-semibold text-white hover:bg-emerald-700"
+      >
+        Invia CV via email
+      </a>
+    </div>
+  )}
+</BaseLayout>

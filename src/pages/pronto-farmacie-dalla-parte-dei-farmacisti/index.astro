@@ -1,0 +1,28 @@
+---
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import { siteUrl } from '@/lib/turni';
+
+const title = 'ProntoFarmacie dalla parte dei farmacisti | ProntoFarmacie';
+const description =
+  'Aggiorna la scheda farmacia, orari e listino servizi. Pubblica offerte di lavoro nella sezione dedicata.';
+const canonical = `${siteUrl(import.meta.env)}/pronto-farmacie-dalla-parte-dei-farmacisti/`;
+---
+
+<BaseLayout title={title} description={description} canonical={canonical}>
+  <main class="mx-auto max-w-3xl px-4 py-16">
+    <p class="text-xs font-semibold uppercase tracking-wide text-emerald-600">Lato farmacisti del marketplace</p>
+    <h1 class="mt-3 text-3xl font-bold text-gray-900">Dalla parte dei farmacisti</h1>
+    <p class="mt-4 text-gray-700">
+      ProntoFarmacie è un marketplace a due lati: gli utenti cercano farmacie aperte e servizi; tu migliori la scheda
+      con orari aggiornati e listino. Le assunzioni restano nella sezione lavoro dedicata.
+    </p>
+    <div class="mt-8 flex flex-wrap gap-3">
+      <a href="/area-farmacia/" class="inline-flex rounded-lg bg-emerald-600 px-6 py-3 font-semibold text-white hover:bg-emerald-700">
+        Vai all&apos;area farmacia
+      </a>
+      <a href="/lavoro/inserisci-annuncio/" class="inline-flex rounded-lg border border-gray-300 bg-white px-6 py-3 font-semibold text-gray-800 hover:bg-gray-50">
+        Pubblica un annuncio lavoro
+      </a>
+    </div>
+  </main>
+</BaseLayout>

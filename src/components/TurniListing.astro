@@ -1,0 +1,348 @@
+---
+import GuardiaMedicaTeaser from '@/components/GuardiaMedicaTeaser.astro';
+import TurniMapIsland from '@/components/TurniMapIsland';
+import TurniNearMeControls from '@/components/TurniNearMeControls';
+import TurniReminderFaq from '@/components/TurniReminderFaq.astro';
+import type { PharmacyRow, TurniQueryMode } from '@/lib/turniData';
+import { getTurniQueryMode, NEAR_ME_PREFERRED_KM, showUpdatedBadge, toMapPoints, filterMapPointsNearCluster } from '@/lib/turniData';
+import { buildDirectionsHref } from '@/lib/directions';
+import { formatOpenNowLabel } from '@/lib/turni';
+
+import type { TurniRelatedLink } from '@/lib/turniProvinceSeo';
+
+interface Props {
+  scope: 'city' | 'province' | 'geo';
+  title: string;
+  description: string;
+  heading: string;
+  subheading?: string;
+  rows: PharmacyRow[];
+  updatedAt: Date | null;
+  provinceCode?: string;
+  provinceLink?: string | null;
+  relatedLinks?: TurniRelatedLink[];
+  faqItems?: { question: string; answer: string }[];
+  distanceBySlug?: Record<string, number>;
+  searchCenter?: { lat: number; lng: number } | null;
+  guardiaMedicaCity?: string | null;
+  guardiaMedicaProvinceCode?: string | null;
+  guardiaMedicaCitySlug?: string | null;
+  mapFallbackCenter?: { lat: number; lng: number } | null;
+  queryMode?: TurniQueryMode;
+  /** Farmacie totali nel comune (anche se non in turno ora). */
+  cityPharmacyCount?: number | null;
+  /** Risultati da ricerca estesa 10→20 km quando il comune è vuoto. */
+  nearbySearch?: {
+    radiusKm: number;
+    extended: boolean;
+  } | null;
+}
+
+const {
+  scope,
+  title,
+  description,
+  heading,
+  subheading = '',
+  rows,
+  updatedAt,
+  provinceCode = '',
+  provinceLink = null,
+  relatedLinks = [],
+  faqItems = [],
+  distanceBySlug = {},
+  searchCenter = null,
+  guardiaMedicaCity = null,
+  guardiaMedicaProvinceCode = null,
+  guardiaMedicaCitySlug = null,
+  mapFallbackCenter = null,
+  queryMode = getTurniQueryMode(),
+  cityPharmacyCount = null,
+  nearbySearch = null,
+} = Astro.props;
+
+const cityNameFromSubheading = subheading.replace(/^a\s+/i, '').trim();
+const formatKm = (km: number) =>
+  km.toLocaleString('it-IT', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+
+const resolvedGuardiaCity = guardiaMedicaCity ?? rows[0]?.city ?? null;
+const resolvedGuardiaProvince =
+  guardiaMedicaProvinceCode ?? rows[0]?.province?.toUpperCase() ?? null;
+
+const isOrdinaryMode = queryMode === 'ordinary';
+const showDistanceFromCity =
+  nearbySearch != null || (scope === 'geo' && Object.keys(distanceBySlug).length > 0);
+const totalCount = rows.length;
+const openCount = rows.filter((row) => row.status.isOpen).length;
+const mapPointsRaw = toMapPoints(rows);
+const mapPoints =
+  scope === 'province' ? filterMapPointsNearCluster(mapPointsRaw, 75) : mapPointsRaw;
+const showMap =
+  mapFallbackCenter != null ||
+  mapPoints.length > 0 ||
+  (scope === 'geo' && searchCenter != null);
+
+const cards = rows.map((r) => ({
+  id: r.id,
+  lat: Number(r.latitude),
+  lng: Number(r.longitude),
+  name: r.name,
+  address: r.address,
+  slug: r.prontofarmacie_slug || '',
+  statusLabel: r.status.label,
+  statusDetail: r.status.detail,
+  city: r.city,
+  province: r.province,
+  phone: r.phone,
+  isOpen: r.status.isOpen,
+  detailLink: r.prontofarmacie_slug ? `/farmacia/${r.prontofarmacie_slug}/` : '#',
+}));
+
+const cityLabel = cityNameFromSubheading;
+const placePrep = cityLabel && /^[aeiouàèéìòù]/iu.test(cityLabel) ? 'ad' : 'a';
+const provincePlaceLabel = (subheading.match(/^in provincia di\s+(.+)$/i)?.[1] || '').trim();
+const mapHeading =
+  scope === 'province' && provincePlaceLabel
+    ? `Mappa farmacie di turno in Provincia di ${provincePlaceLabel}`
+    : cityLabel && !/^in provincia di\b/i.test(cityLabel)
+      ? `Mappa farmacie aperte ${placePrep} ${cityLabel}`
+      : scope === 'province' && subheading
+        ? `Mappa farmacie di turno ${subheading.replace(/^in\s+/i, 'in ')}`
+        : 'Mappa farmacie aperte ora';
+const faqHeading =
+  scope === 'city' && cityLabel
+    ? `Domande frequenti sulle farmacie di turno aperte ${placePrep} ${cityLabel}`
+    : scope === 'province' && provincePlaceLabel
+      ? `Domande frequenti sulle farmacie di turno aperte in provincia di ${provincePlaceLabel}`
+      : scope === 'province' && provinceCode
+        ? `Domande frequenti sulle farmacie di turno aperte in provincia`
+        : 'Domande frequenti';
+---
+
+<div class="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+  <div class="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+    <div>
+      {scope === 'province' && provinceCode && (
+        <p class="text-xs font-semibold uppercase tracking-widest text-emerald-600">Provincia di {provinceCode}</p>
+      )}
+      <h1 class="mt-2 text-3xl font-bold text-gray-900 sm:text-4xl">{heading}</h1>
+      <p class="mt-2 text-sm font-semibold text-emerald-700 sm:text-base">
+        {isOrdinaryMode ? `Orario ordinario: ${formatOpenNowLabel()}` : `Aperte ora: ${formatOpenNowLabel()}`}
+      </p>
+      <p class="mt-2 max-w-2xl text-gray-600">
+        {isOrdinaryMode
+          ? totalCount > 0
+            ? `Elenco di ${totalCount} farmacie${subheading ? ` ${subheading}` : ''}. ${openCount} risultano aperte ora con orario ordinario.`
+            : `Nessuna farmacia trovata${subheading ? ` ${subheading}` : ''}.`
+          : openCount > 0 && nearbySearch
+            ? nearbySearch.extended
+              ? `Nel comune non risultano farmacie di turno aperte ora${subheading ? ` ${subheading}` : ''}. Abbiamo trovato ${openCount} farmacie aperte entro ${formatKm(nearbySearch.radiusKm)} km (ricerca estesa oltre ${NEAR_ME_PREFERRED_KM} km).`
+              : `Nel comune non risultano farmacie di turno aperte ora${subheading ? ` ${subheading}` : ''}. Abbiamo trovato ${openCount} farmacie aperte entro ${NEAR_ME_PREFERRED_KM} km.`
+            : openCount > 0
+              ? `Abbiamo trovato ${openCount} farmacie aperte ora${subheading ? ` ${subheading}` : ''}.`
+              : cityPharmacyCount && cityPharmacyCount > 0
+                ? `Al momento non risultano farmacie di turno aperte ora${subheading ? ` ${subheading}` : ''} (${cityPharmacyCount} farmacie nel comune, nessuna in turno adesso). Abbiamo cercato anche entro ${NEAR_ME_PREFERRED_KM}–20 km senza risultati.`
+                : `Al momento non risultano farmacie aperte ora${subheading ? ` ${subheading}` : ''}.`}
+        {' '}Verifica sempre telefonicamente prima di recarti in sede.
+      </p>
+    </div>
+    {showUpdatedBadge(updatedAt) && updatedAt && (
+      <div class="rounded-full border border-emerald-100 bg-emerald-50 px-4 py-2 text-sm text-gray-500">
+        Aggiornato:{' '}
+        {updatedAt.toLocaleString('it-IT', {
+          timeZone: 'Europe/Rome',
+          day: '2-digit',
+          month: '2-digit',
+          year: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit',
+        })}
+      </div>
+    )}
+  </div>
+
+  {showMap && (
+    <section class="mt-8 overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-lg">
+      <div class="border-b border-gray-100 px-5 py-4 sm:px-6">
+        <h2 class="text-lg font-bold text-gray-900">{mapHeading}</h2>
+        <p class="mt-1 text-sm text-gray-500">
+          {mapPoints.length > 0
+            ? 'Tocca un marker per nome, indirizzo e indicazioni stradali.'
+            : 'Nessuna farmacia di turno aperta ora in elenco: mappa centrata sul comune.'}
+        </p>
+      </div>
+      <div id="turni-map" class="relative h-[400px] scroll-mt-6 md:h-[500px]">
+        <TurniMapIsland
+          client:only="react"
+          points={mapPoints}
+          userLocation={searchCenter}
+          defaultCenter={mapFallbackCenter ?? (nearbySearch && searchCenter ? searchCenter : null)}
+          fitMaxZoom={scope === 'province' ? 11 : 15}
+          searchCenterLabel={
+            scope === 'geo'
+              ? 'La tua posizione'
+              : cityNameFromSubheading
+                ? cityNameFromSubheading
+                : 'Comune cercato'
+          }
+        />
+      </div>
+    </section>
+  )}
+
+  {mapPoints.length > 0 && <div class="mt-6"><TurniNearMeControls client:load allPoints={mapPoints} cards={cards} /></div>}
+
+  <h2 class="mb-6 text-xl font-bold text-gray-900">
+    {isOrdinaryMode
+      ? `Farmacie di turno${subheading ? ` ${subheading}` : ''} (${totalCount})`
+      : nearbySearch && openCount > 0
+        ? `Farmacie aperte nelle vicinanze (${openCount})`
+        : `Farmacie aperte ora (${openCount})`}
+  </h2>
+  <div id="pharmacy-cards-grid" class="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+    {rows.map((row) => {
+      const detailUrl = row.prontofarmacie_slug ? `/farmacia/${row.prontofarmacie_slug}/` : '';
+      const phoneDigits = row.phone ? String(row.phone).replace(/\D/g, '') : '';
+      const lat = Number(row.latitude);
+      const lng = Number(row.longitude);
+      const directionsHref = buildDirectionsHref({
+        lat,
+        lng,
+        address: row.address,
+        name: row.name,
+        city: row.city,
+        province: row.province,
+      });
+      const callClass = row.status.isOpen
+        ? 'bg-emerald-600 text-white hover:bg-emerald-700'
+        : 'bg-amber-400 text-amber-950 hover:bg-amber-500';
+      return (
+      <article
+        class="pharmacy-card group relative flex flex-col rounded-2xl border border-gray-200 bg-white p-5 shadow-sm transition-all hover:border-emerald-200 hover:shadow-md"
+        data-slug={row.prontofarmacie_slug || ''}
+        data-lat={row.latitude ?? ''}
+        data-lng={row.longitude ?? ''}
+      >
+        {detailUrl && (
+          <a
+            href={detailUrl}
+            class="absolute inset-0 z-0 rounded-2xl"
+            aria-label={`Vai alla scheda di ${row.name}`}
+          />
+        )}
+        <div class="relative z-[1] pointer-events-none flex flex-1 flex-col">
+          <span
+            class={`mb-3 inline-flex w-fit rounded-full px-2 py-0.5 text-xs font-semibold uppercase tracking-wide ${
+              row.status.isOpen
+                ? 'bg-emerald-600 text-white dark:bg-emerald-500 dark:text-emerald-950'
+                : 'bg-amber-500 text-amber-950 dark:bg-amber-400 dark:text-amber-950'
+            }`}
+          >
+            {row.status.label}
+          </span>
+          <h3 class="text-lg font-bold text-gray-900 transition-colors group-hover:text-emerald-800">
+            {row.name}
+          </h3>
+          <p class="near-me-distance hidden text-xs font-medium text-sky-700"></p>
+          {(scope === 'province' || scope === 'geo' || nearbySearch) && (
+            <p class="text-xs uppercase tracking-wide text-gray-500">{row.city}</p>
+          )}
+          {showDistanceFromCity && distanceBySlug[row.prontofarmacie_slug || ''] != null && (
+            <p class="text-xs font-semibold text-sky-700">
+              {scope === 'geo'
+                ? `Circa ${formatKm(distanceBySlug[row.prontofarmacie_slug || ''])} km da te`
+                : `Circa ${formatKm(distanceBySlug[row.prontofarmacie_slug || ''])} km${cityNameFromSubheading ? ` da ${cityNameFromSubheading}` : ''}`}
+            </p>
+          )}
+          <p class="text-xs text-gray-600">{row.address}</p>
+          <p
+            class={`mt-2 inline-block w-fit rounded-md px-2 py-1 text-xs font-bold ${
+              row.status.isOpen
+                ? 'bg-emerald-100 text-emerald-900 dark:bg-emerald-950 dark:text-emerald-200 dark:ring-1 dark:ring-emerald-700'
+                : 'bg-amber-100 text-amber-900 dark:bg-amber-950 dark:text-amber-200 dark:ring-1 dark:ring-amber-700'
+            }`}
+          >
+            {row.status.detail}
+          </p>
+        </div>
+        <div class="pointer-events-auto relative z-[2] mt-auto flex flex-wrap gap-2 pt-4">
+          {phoneDigits && (
+            <a
+              href={`tel:${phoneDigits}`}
+              class={`inline-flex items-center rounded-full px-4 py-2 text-sm font-bold shadow-sm ${callClass}`}
+              data-ga-event="cta_call"
+              data-ga-label="chiama"
+              data-ga-pharmacy={row.prontofarmacie_slug || undefined}
+            >
+              Chiama
+            </a>
+          )}
+          {directionsHref && (
+            <a
+              href={directionsHref}
+              target="_blank"
+              rel="noopener noreferrer"
+              class="inline-flex items-center rounded-full border border-emerald-200 bg-white px-4 py-2 text-sm font-bold text-emerald-800 hover:bg-emerald-50 dark:border-emerald-600 dark:bg-slate-900 dark:text-emerald-300 dark:hover:bg-emerald-950"
+              data-ga-event="cta_directions"
+              data-ga-label="direzioni"
+              data-ga-pharmacy={row.prontofarmacie_slug || undefined}
+            >
+              Direzioni
+            </a>
+          )}
+        </div>
+      </article>
+      );
+    })}
+  </div>
+
+  <GuardiaMedicaTeaser
+    city={resolvedGuardiaCity}
+    provinceCode={resolvedGuardiaProvince}
+    citySlug={guardiaMedicaCitySlug}
+  />
+
+  {relatedLinks.length > 0 && (
+    <section class="mt-12 rounded-3xl border border-emerald-200 bg-emerald-50 p-6 shadow-sm sm:p-8 dark:border-emerald-800 dark:bg-slate-900 dark:shadow-none">
+      <p class="text-xs font-semibold uppercase tracking-wide text-emerald-700 dark:text-emerald-300">Località correlate</p>
+      <h2 class="mt-2 text-xl font-bold text-gray-900 dark:text-slate-100">
+        Farmacie di turno anche nelle zone vicine
+      </h2>
+      <p class="mt-2 max-w-3xl text-sm text-gray-600 dark:text-slate-300">
+        Se non trovi la farmacia più comoda in questa pagina, consulta le città collegate e la provincia:
+        sono percorsi utili per spostarsi rapidamente tra le località con farmacie aperte ora.
+      </p>
+      <ul class="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        {relatedLinks.map((link) => (
+          <li>
+            <a
+              href={link.href}
+              class="flex h-full items-center justify-between gap-3 rounded-2xl border border-emerald-100 bg-white px-4 py-3 text-sm font-semibold text-gray-900 shadow-sm hover:border-emerald-300 hover:bg-emerald-50 dark:border-emerald-700 dark:bg-slate-800 dark:text-slate-100 dark:hover:border-emerald-500 dark:hover:bg-emerald-950"
+            >
+              <span>{link.label}</span>
+              <span class="shrink-0 text-emerald-700 dark:text-emerald-300" aria-hidden="true">→</span>
+            </a>
+          </li>
+        ))}
+      </ul>
+    </section>
+  )}
+
+  {faqItems.length > 0 && (
+    <section class="mt-10 rounded-2xl border border-gray-200 bg-white p-6 sm:p-8 dark:border-slate-700 dark:bg-slate-900">
+      <h2 class="text-xl font-bold text-gray-900 sm:text-2xl dark:text-slate-100">
+        {faqHeading}
+      </h2>
+      <div class="mt-5 space-y-5">
+        {faqItems.map((item) => (
+          <div>
+            <h3 class="text-base font-semibold text-gray-900 dark:text-slate-100">{item.question}</h3>
+            <p class="mt-1 text-sm leading-6 text-gray-600 dark:text-slate-300">{item.answer}</p>
+          </div>
+        ))}
+      </div>
+    </section>
+  )}
+
+  <TurniReminderFaq />
+</div>

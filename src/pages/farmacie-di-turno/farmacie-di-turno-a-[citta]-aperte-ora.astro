@@ -1,0 +1,130 @@
+---
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import TurniListing from '@/components/TurniListing.astro';
+import {
+  countPharmaciesInCity,
+  fetchOpenPharmaciesByCity,
+  getTurniQueryMode,
+  latestUpdatedAt,
+  resolveCityLabel,
+  resolveProvinceCodeForCitySlug,
+  resolveTurniMapFallbackCenter,
+} from '@/lib/turniData';
+import {
+  cityTurniUrl,
+  PROVINCE_NAME_BY_CODE,
+  siteUrl,
+} from '@/lib/turni';
+import { buildBreadcrumbJsonLd, buildFaqJsonLd, buildMedicalWebPageJsonLd } from '@/lib/seo';
+import { buildCityTurniFaqItems, mergeTurniFaqForJsonLd } from '@/lib/turniFaq';
+import {
+  fetchTurniSourcesForCitySlug,
+  fetchTurniSourcesForProvince,
+  latestSourceUpdatedAt,
+  mergeTurniSources,
+} from '@/lib/turniSources';
+import {
+  buildCityTurniRelatedLinks,
+  buildCityTurniMetaDescription,
+  buildTurniPharmacyItemListJsonLd,
+  buildTurniSeoTitle,
+} from '@/lib/turniProvinceSeo';
+
+const { citta } = Astro.params;
+if (!citta) return Astro.redirect('/farmacie-di-turno/', 302);
+
+const citySlug = citta.toLowerCase().trim();
+const queryMode = getTurniQueryMode();
+const [{ rows, nearbySearch }, cityPharmacyCount] = await Promise.all([
+  fetchOpenPharmaciesByCity(citySlug),
+  countPharmaciesInCity(citySlug),
+]);
+const cityLabel = nearbySearch ? resolveCityLabel([], citySlug) : resolveCityLabel(rows, citySlug);
+const openCount = rows.filter((row) => row.status.isOpen).length;
+const mapFallbackCenter = await resolveTurniMapFallbackCenter(rows, cityLabel, citySlug);
+const updatedAt = latestUpdatedAt(rows);
+const base = siteUrl(import.meta.env);
+const canonical = cityTurniUrl(import.meta.env, citySlug);
+
+// Con ricerca nearby non usare la provincia della prima farmacia lontana (es. VA per Castelletto NO).
+const provinceCode =
+  (await resolveProvinceCodeForCitySlug(citySlug)) ||
+  (!nearbySearch ? rows[0]?.province?.toUpperCase() ?? '' : '') ||
+  '';
+const relatedLinks = provinceCode
+  ? await buildCityTurniRelatedLinks(import.meta.env, cityLabel, provinceCode, rows)
+  : await buildCityTurniRelatedLinks(import.meta.env, cityLabel, '', rows);
+
+const openNowPageTitle = `Farmacie di turno a ${cityLabel}`;
+const title = buildTurniSeoTitle(cityLabel);
+const description =
+  queryMode === 'ordinary'
+    ? `Farmacie di turno a ${cityLabel}: orari, indirizzi, mappa e telefono. ${openCount} risultano aperte ora con orario ordinario.`
+    : buildCityTurniMetaDescription(cityLabel);
+
+const provinceLabel = provinceCode ? (PROVINCE_NAME_BY_CODE[provinceCode] ?? provinceCode) : cityLabel;
+const [provinceSources, citySources] = provinceCode
+  ? await Promise.all([
+      fetchTurniSourcesForProvince(import.meta.env, provinceCode),
+      fetchTurniSourcesForCitySlug(import.meta.env, citySlug),
+    ])
+  : [[], await fetchTurniSourcesForCitySlug(import.meta.env, citySlug)];
+const turniSources = mergeTurniSources(provinceSources, citySources);
+const officialShiftOpenCount = rows.filter(
+  (row) => row.status.isOpen && row.status.hasOfficialShift,
+).length;
+
+const faq = buildCityTurniFaqItems({
+  cityLabel,
+  provinceLabel,
+  queryMode,
+  openCount,
+  totalListed: rows.length,
+  cityPharmacyCount,
+  officialShiftOpenCount,
+  sources: turniSources,
+  sourcesUpdatedAt: latestSourceUpdatedAt(turniSources),
+  nearbySearch: nearbySearch ?? null,
+});
+
+const itemListJsonLd = buildTurniPharmacyItemListJsonLd(
+  import.meta.env,
+  rows,
+  openNowPageTitle,
+  description,
+);
+
+const jsonLd = [
+  buildMedicalWebPageJsonLd({ url: canonical, name: title, description }),
+  buildBreadcrumbJsonLd([
+    { name: 'Home', url: `${base}/` },
+    { name: 'Farmacie di turno', url: `${base}/farmacie-di-turno/` },
+    { name: cityLabel, url: canonical },
+  ]),
+  buildFaqJsonLd(mergeTurniFaqForJsonLd(faq)),
+  ...(itemListJsonLd ? [itemListJsonLd] : []),
+];
+---
+
+<BaseLayout title={title} description={description} canonical={canonical} jsonLd={jsonLd}>
+  <TurniListing
+    scope="city"
+    title={title}
+    description={description}
+    heading={openNowPageTitle}
+    subheading={`a ${cityLabel}`}
+    rows={rows}
+    updatedAt={updatedAt}
+    relatedLinks={relatedLinks}
+    faqItems={faq}
+    guardiaMedicaCity={cityLabel}
+    guardiaMedicaProvinceCode={provinceCode}
+    guardiaMedicaCitySlug={citySlug}
+    mapFallbackCenter={mapFallbackCenter}
+    queryMode={queryMode}
+    cityPharmacyCount={cityPharmacyCount}
+    nearbySearch={nearbySearch ?? null}
+    searchCenter={nearbySearch?.center ?? null}
+    distanceBySlug={nearbySearch?.distanceBySlug ?? {}}
+  />
+</BaseLayout>

@@ -1,0 +1,10 @@
+---
+import { slugifySegment } from '@/lib/turni';
+
+export const prerender = false;
+
+const city = slugifySegment(Astro.url.searchParams.get('city')?.trim() || '');
+const role = slugifySegment(Astro.url.searchParams.get('role')?.trim() || '') || 'tutte';
+const targetCity = city || 'tutta-italia';
+return Astro.redirect(`/lavoro/${targetCity}/${role}/`, 302);
+---

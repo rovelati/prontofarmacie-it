@@ -1,0 +1,47 @@
+---
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import { getShopBySlug } from '@/lib/shop';
+import { siteUrl } from '@/lib/turni';
+
+const { slug } = Astro.params;
+if (!slug) return Astro.redirect('/shop/elenco-dei-migliori-ecommerce-del-farmaco-trova-link-promo-sconti/', 302);
+
+const shop = getShopBySlug(slug);
+if (!shop) {
+  Astro.response.status = 404;
+  return Astro.rewrite('/404');
+}
+
+const title = `${shop.seoTitle || shop.name} | ProntoFarmacie`;
+const description = shop.seoDescription || shop.description;
+const canonical = `${siteUrl(import.meta.env)}/shop/${shop.slug}/`;
+---
+
+<BaseLayout title={title} description={description} canonical={canonical}>
+  <article class="mx-auto max-w-3xl px-4 py-10 sm:px-6 lg:px-8">
+    <p class="text-sm text-gray-500">
+      <a href="/shop/elenco-dei-migliori-ecommerce-del-farmaco-trova-link-promo-sconti/" class="text-emerald-700 hover:underline">← Elenco shop</a>
+    </p>
+    <h1 class="mt-4 text-3xl font-bold text-gray-900">{shop.name}</h1>
+    {shop.rating && <p class="mt-2 text-amber-700 font-semibold">Valutazione: {shop.rating}{shop.reviews ? ` (${shop.reviews} recensioni)` : ''}</p>}
+    <p class="mt-4 text-gray-700">{shop.description}</p>
+    <div class="mt-8 flex flex-wrap gap-3">
+      <a href={shop.shopUrl} target="_blank" rel="noopener noreferrer" class="rounded-lg bg-emerald-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-emerald-700">
+        Vai allo shop
+      </a>
+      {'promoUrl' in shop && shop.promoUrl && (
+        <a href={shop.promoUrl} target="_blank" rel="noopener noreferrer" class="rounded-lg border px-5 py-2.5 text-sm font-semibold text-gray-800 hover:border-emerald-300">
+          Promo e sconti
+        </a>
+      )}
+      <a href={`/shop/${shop.slug}/offerte-odierne/`} class="rounded-lg border px-5 py-2.5 text-sm font-semibold text-gray-800 hover:border-emerald-300">
+        Offerte odierne
+      </a>
+      {shop.complaintPath && (
+        <a href={shop.complaintPath} class="rounded-lg border px-5 py-2.5 text-sm font-semibold text-gray-800 hover:border-emerald-300">
+          Reclami
+        </a>
+      )}
+    </div>
+  </article>
+</BaseLayout>

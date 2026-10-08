@@ -1,0 +1,28 @@
+---
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import MarketplaceAuthForm from '@/components/marketplace/MarketplaceAuthForm';
+import { getGoogleOAuthConfig } from '@/lib/google-oauth';
+import { siteUrl } from '@/lib/turni';
+
+export const prerender = false;
+
+const title = 'Accedi area farmacia | ProntoFarmacie';
+const canonical = `${siteUrl(import.meta.env)}/area-farmacia/accedi/`;
+const googleAuthEnabled = getGoogleOAuthConfig(siteUrl(import.meta.env)).enabled;
+---
+
+<BaseLayout title={title} description="Accesso area farmacia ProntoFarmacie." canonical={canonical} noindex>
+  <div class="mx-auto max-w-5xl px-4 py-12 sm:px-6">
+    <MarketplaceAuthForm
+      client:only="react"
+      role="pharmacy_owner"
+      mode="login"
+      title="Accedi come farmacista"
+      subtitle="Gestisci orari, servizi e collegati alla scheda della tua farmacia."
+      redirectTo="/area-farmacia/dashboard/"
+      registerHref="/area-farmacia/registrati/"
+      loginHref="/area-farmacia/accedi/"
+      googleAuthEnabled={googleAuthEnabled}
+    />
+  </div>
+</BaseLayout>

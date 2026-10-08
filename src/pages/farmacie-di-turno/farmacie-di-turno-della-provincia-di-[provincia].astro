@@ -1,0 +1,93 @@
+---
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import TurniListing from '@/components/TurniListing.astro';
+import {
+  fetchOpenPharmaciesByProvince,
+  getTurniQueryMode,
+  latestUpdatedAt,
+  resolveTurniMapFallbackCenter,
+} from '@/lib/turniData';
+import { provinceCodeFromSlug, provinceTurniUrl, siteUrl } from '@/lib/turni';
+import { buildBreadcrumbJsonLd, buildFaqJsonLd, buildMedicalWebPageJsonLd } from '@/lib/seo';
+import { buildProvinceTurniFaqItems, mergeTurniFaqForJsonLd } from '@/lib/turniFaq';
+import { fetchTurniSourcesForProvince, latestSourceUpdatedAt } from '@/lib/turniSources';
+import {
+  buildProvinceTurniHeading,
+  buildProvinceTurniMetaDescription,
+  buildProvinceTurniRelatedLinks,
+  buildProvinceTurniTitle,
+  buildTurniPharmacyItemListJsonLd,
+} from '@/lib/turniProvinceSeo';
+
+const { provincia } = Astro.params;
+if (!provincia) return Astro.redirect('/farmacie-di-turno/', 302);
+
+const meta = provinceCodeFromSlug(provincia);
+if (!meta) return new Response('Provincia non trovata', { status: 404 });
+
+const rows = await fetchOpenPharmaciesByProvince(meta.code);
+const queryMode = getTurniQueryMode();
+const mapFallbackCenter = await resolveTurniMapFallbackCenter(rows, meta.label);
+const updatedAt = latestUpdatedAt(rows);
+const base = siteUrl(import.meta.env);
+const canonical = provinceTurniUrl(import.meta.env, provincia);
+const openCount = rows.filter((row) => row.status.isOpen).length;
+
+const title = buildProvinceTurniTitle(meta.label);
+const description =
+  queryMode === 'ordinary'
+    ? `Farmacie di turno in provincia di ${meta.label}: orari, mappa e telefono. ${openCount} risultano aperte ora con orario ordinario.`
+    : buildProvinceTurniMetaDescription(meta.label);
+const heading = buildProvinceTurniHeading(meta.label);
+const relatedLinks = buildProvinceTurniRelatedLinks(import.meta.env, meta.code, meta.label, rows);
+
+const turniSources = await fetchTurniSourcesForProvince(import.meta.env, meta.code);
+const officialShiftOpenCount = rows.filter(
+  (row) => row.status.isOpen && row.status.hasOfficialShift,
+).length;
+
+const faq = buildProvinceTurniFaqItems({
+  provinceLabel: meta.label,
+  queryMode,
+  openCount,
+  totalListed: rows.length,
+  officialShiftOpenCount,
+  sources: turniSources,
+  sourcesUpdatedAt: latestSourceUpdatedAt(turniSources),
+});
+
+const itemListJsonLd = buildTurniPharmacyItemListJsonLd(
+  import.meta.env,
+  rows,
+  `Farmacie di turno provincia di ${meta.label}`,
+  description,
+);
+const jsonLd = [
+  buildMedicalWebPageJsonLd({ url: canonical, name: title, description }),
+  buildBreadcrumbJsonLd([
+    { name: 'Home', url: `${base}/` },
+    { name: 'Farmacie di turno', url: `${base}/farmacie-di-turno/` },
+    { name: meta.label, url: canonical },
+  ]),
+  ...(itemListJsonLd ? [itemListJsonLd] : []),
+  buildFaqJsonLd(mergeTurniFaqForJsonLd(faq)),
+];
+---
+
+<BaseLayout title={title} description={description} canonical={canonical} jsonLd={jsonLd}>
+  <TurniListing
+    scope="province"
+    title={title}
+    description={description}
+    heading={heading}
+    subheading={`in provincia di ${meta.label}`}
+    rows={rows}
+    updatedAt={updatedAt}
+    provinceCode={meta.code}
+    relatedLinks={relatedLinks}
+    faqItems={faq}
+    guardiaMedicaProvinceCode={meta.code}
+    mapFallbackCenter={mapFallbackCenter}
+    queryMode={queryMode}
+  />
+</BaseLayout>

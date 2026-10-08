@@ -1,0 +1,65 @@
+---
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import {
+  fetchOrdineByProvinceCode,
+  getOrdineBestLink,
+  provinceCodeFromSlug,
+} from '@/lib/ordini';
+import { PROVINCE_NAME_BY_CODE } from '@/lib/provinceNames';
+import { provinceTurniUrl, siteUrl, slugifySegment } from '@/lib/turni';
+
+const { provinciaSlug } = Astro.params;
+if (!provinciaSlug) return Astro.redirect('/credits/', 302);
+
+const provinceCode = provinceCodeFromSlug(provinciaSlug);
+if (!provinceCode) {
+  Astro.response.status = 404;
+  return Astro.rewrite('/404');
+}
+
+const ordine = await fetchOrdineByProvinceCode(provinceCode);
+if (!ordine) {
+  Astro.response.status = 404;
+  return Astro.rewrite('/404');
+}
+
+const provinceLabel = ordine.provincia || PROVINCE_NAME_BY_CODE[provinceCode] || provinciaSlug.replace(/-/g, ' ');
+const slug = slugifySegment(provinceLabel);
+const title = `Ordine dei Farmacisti di ${provinceLabel} | ProntoFarmacie`;
+const description = `Contatti e link ufficiali dell'Ordine dei Farmacisti di ${provinceLabel}.`;
+const canonical = `${siteUrl(import.meta.env)}/credits/ordine-farmacisti/${provinciaSlug}/`;
+const turniUrl = provinceTurniUrl(import.meta.env, slug);
+const bestLink = getOrdineBestLink(ordine);
+---
+
+<BaseLayout title={title} description={description} canonical={canonical}>
+  <article class="mx-auto max-w-3xl px-4 py-12 sm:px-6 lg:px-8">
+    <p class="text-sm text-gray-500">
+      <a href="/credits/" class="text-emerald-700 hover:underline">← Crediti</a>
+    </p>
+    <h1 class="mt-4 text-3xl font-bold text-gray-900">Ordine dei Farmacisti — {provinceLabel}</h1>
+    <p class="mt-2 text-gray-600">{ordine.regione}</p>
+
+    <div class="mt-8 space-y-4 rounded-2xl border bg-white p-6 shadow-sm">
+      {ordine.address && <p><span class="font-semibold">Indirizzo:</span> {ordine.address}</p>}
+      {ordine.phone && <p><span class="font-semibold">Telefono:</span> {ordine.phone}</p>}
+      {ordine.email && <p><span class="font-semibold">Email:</span> <a href={`mailto:${ordine.email}`} class="text-emerald-700">{ordine.email}</a></p>}
+      {ordine.pec && <p><span class="font-semibold">PEC:</span> {ordine.pec}</p>}
+      <p>
+        <a href={ordine.url_sito_ordine} target="_blank" rel="noopener noreferrer" class="font-semibold text-emerald-700 hover:underline">
+          Sito ufficiale ordine →
+        </a>
+      </p>
+      <p>
+        <a href={bestLink.href} target="_blank" rel="noopener noreferrer" class="text-sm text-gray-700 hover:text-emerald-700">
+          {bestLink.label} (ordine)
+        </a>
+      </p>
+      <p>
+        <a href={turniUrl} class="text-sm font-semibold text-emerald-700 hover:underline">
+          Farmacie di turno su ProntoFarmacie →
+        </a>
+      </p>
+    </div>
+  </article>
+</BaseLayout>

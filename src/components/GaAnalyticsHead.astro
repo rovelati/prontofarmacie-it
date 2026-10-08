@@ -1,0 +1,40 @@
+---
+interface Props {
+  pageTitle: string;
+}
+
+/** Stesso GA4 del vecchio prontofarmacie-web/index.html */
+const { pageTitle } = Astro.props;
+const GA_MEASUREMENT_ID = 'G-9NEW9Y8PPH';
+---
+
+<!-- Google tag (gtag.js) - Google Analytics 4 -->
+<script async src={`https://www.googletagmanager.com/gtag/js?id=${GA_MEASUREMENT_ID}`}></script>
+<script is:inline define:vars={{ GA_MEASUREMENT_ID, pageTitle }}>
+  window.dataLayer = window.dataLayer || [];
+  function gtag() { dataLayer.push(arguments); }
+  gtag('js', new Date());
+
+  function pfPageType(pathname) {
+    var p = (pathname || '').toLowerCase();
+    if (p === '/' || p === '') return 'home';
+    if (p.indexOf('/farmacie-di-turno-della-provincia-di-') !== -1) return 'turni_province';
+    if (p.indexOf('/farmacie-di-turno-a-') !== -1 && p.indexOf('-aperte-ora') !== -1) return 'turni_city';
+    if (p.indexOf('/farmacie-di-turno') !== -1) return 'turni_hub';
+    if (p.indexOf('/farmacia/') === 0) return 'farmacia_detail';
+    if (p.indexOf('/listafarmacie') === 0) return 'lista_farmacie';
+    if (p.indexOf('/lavoro') === 0) return 'lavoro';
+    if (p.indexOf('/notizie') === 0) return 'notizie';
+    return 'other';
+  }
+
+  var pageType = pfPageType(window.location.pathname);
+  gtag('config', GA_MEASUREMENT_ID, { send_page_view: false });
+  gtag('event', 'page_view', {
+    page_path: window.location.pathname + window.location.search,
+    page_location: window.location.href,
+    page_title: pageTitle || document.title,
+    page_type: pageType,
+  });
+</script>
+<!-- End Google tag (gtag.js) -->

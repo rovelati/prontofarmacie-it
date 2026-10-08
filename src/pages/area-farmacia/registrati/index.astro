@@ -1,0 +1,28 @@
+---
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import MarketplaceAuthForm from '@/components/marketplace/MarketplaceAuthForm';
+import { getGoogleOAuthConfig } from '@/lib/google-oauth';
+import { siteUrl } from '@/lib/turni';
+
+export const prerender = false;
+
+const title = 'Registrati area farmacia | ProntoFarmacie';
+const canonical = `${siteUrl(import.meta.env)}/area-farmacia/registrati/`;
+const googleAuthEnabled = getGoogleOAuthConfig(siteUrl(import.meta.env)).enabled;
+---
+
+<BaseLayout title={title} description="Crea un account farmacista su ProntoFarmacie." canonical={canonical} noindex>
+  <div class="mx-auto max-w-5xl px-4 py-12 sm:px-6">
+    <MarketplaceAuthForm
+      client:only="react"
+      role="pharmacy_owner"
+      mode="register"
+      title="Crea account farmacista"
+      subtitle="Collega la scheda, aggiorna orari e listino, pubblica offerte in /lavoro/. Separato da chi cerca solo una farmacia aperta."
+      redirectTo="/area-farmacia/dashboard/"
+      registerHref="/area-farmacia/registrati/"
+      loginHref="/area-farmacia/accedi/"
+      googleAuthEnabled={googleAuthEnabled}
+    />
+  </div>
+</BaseLayout>

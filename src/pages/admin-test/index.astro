@@ -1,0 +1,12 @@
+---
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import AdminTestApp from '@/components/admin/AdminTestApp';
+import { siteUrl } from '@/lib/turni';
+
+const title = 'Admin test | ProntoFarmacie';
+const canonical = `${siteUrl(import.meta.env)}/admin-test/`;
+---
+
+<BaseLayout title={title} description="Console amministrativa ProntoFarmacie." canonical={canonical} noindex bare>
+  <AdminTestApp client:only="react" />
+</BaseLayout>

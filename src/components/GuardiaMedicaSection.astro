@@ -1,0 +1,119 @@
+---
+import {
+  buildGuardiaMedicaBoxContent,
+  buildGuardiaMedicaFaqItems,
+  type GuardiaMedicaLocation,
+} from '@/lib/guardiaMedica';
+
+interface Props extends GuardiaMedicaLocation {}
+
+const { city = null, provinceCode = null } = Astro.props;
+const location: GuardiaMedicaLocation = { city, provinceCode };
+const box = buildGuardiaMedicaBoxContent(location);
+const faqItems = buildGuardiaMedicaFaqItems(location);
+const { contact } = box;
+
+/** Rende **telefono** in grassetto + link tel cliccabile (HTML sicuro). */
+function renderInlineBoldWithTel(text: string): string {
+  return text.replace(/\*\*(.+?)\*\*/g, (_m, raw: string) => {
+    const phone = String(raw).trim();
+    const digits = phone.replace(/\D/g, '');
+    if (digits.length >= 3) {
+      const label = phone.replace(/"/g, '&quot;');
+      return `<a href="tel:${digits}" class="font-bold text-sky-900 underline decoration-sky-400/70 underline-offset-2 dark:text-sky-100" data-ga-event="cta_call" data-ga-label="ricetta_${label}">${label}</a>`;
+    }
+    return `<strong>${phone.replace(/</g, '&lt;')}</strong>`;
+  });
+}
+---
+
+<section
+  class="mt-10 rounded-2xl border border-sky-200 bg-gradient-to-br from-sky-50/90 via-white to-indigo-50/40 p-6 shadow-sm dark:border-sky-800 dark:bg-gradient-to-br dark:from-sky-950 dark:via-slate-900 dark:to-indigo-950 dark:shadow-none sm:p-8"
+  aria-labelledby="pf-guardia-medica-title"
+>
+  <p class="text-xs font-semibold uppercase tracking-wide text-sky-700 dark:text-sky-300">Prescrizione e assistenza</p>
+  <h2 id="pf-guardia-medica-title" class="mt-2 text-xl font-bold text-gray-900 dark:text-sky-50 sm:text-2xl">
+    Ti serve una ricetta per un farmaco?
+  </h2>
+  <p class="mt-3 max-w-3xl text-sm leading-6 text-gray-700 dark:text-slate-200">
+    Se il farmaco richiede prescrizione medica e il tuo medico non è disponibile, puoi contattare la
+    Continuità Assistenziale, ex Guardia Medica. Il servizio può fornire indicazioni sanitarie non urgenti e,
+    quando necessario, indirizzarti verso il percorso corretto.
+  </p>
+  <p class="mt-3 max-w-3xl text-sm leading-6 text-gray-800 dark:text-slate-100" set:html={renderInlineBoldWithTel(box.locationSentence)} />
+  {contact.coverage_note && (
+    <p class="mt-2 max-w-3xl text-xs leading-5 text-gray-600 dark:text-slate-300">{contact.coverage_note}</p>
+  )}
+  {contact.opening_hours_note && (
+    <p class="mt-1 max-w-3xl text-xs leading-5 text-gray-600 dark:text-slate-300">{contact.opening_hours_note}</p>
+  )}
+
+  <div class="mt-5 flex flex-wrap gap-3">
+    {box.callHref && box.callLabel && (
+      <a
+        href={box.callHref}
+        class="inline-flex items-center rounded-full bg-sky-700 px-5 py-2.5 text-sm font-bold text-white shadow-sm hover:bg-sky-800 dark:bg-sky-500 dark:text-sky-950 dark:hover:bg-sky-400"
+        data-ga-event="cta_call"
+        data-ga-label={`ricetta_${contact.primary_phone || 'chiama'}`}
+      >
+        {box.callLabel}
+      </a>
+    )}
+    {!box.callHref && contact.official_source_url && (
+      <a
+        href={contact.official_source_url}
+        target="_blank"
+        rel="nofollow noopener"
+        class="inline-flex items-center rounded-full border border-sky-300 bg-white px-5 py-2.5 text-sm font-semibold text-sky-800 hover:bg-sky-50 dark:border-sky-600 dark:bg-slate-900 dark:text-sky-200 dark:hover:bg-sky-950"
+        data-ga-event="cta_ricetta_guide"
+        data-ga-label="sito_ufficiale_asl"
+      >
+        Consulta il sito ufficiale ASL / Regione
+      </a>
+    )}
+  </div>
+
+  <p class="mt-4 text-sm font-semibold text-rose-800 dark:text-rose-300">
+    In caso di emergenza o pericolo immediato chiama sempre il{' '}
+    <a
+      href={`tel:${contact.emergency_phone.replace(/\D/g, '')}`}
+      class="font-bold underline decoration-rose-400/70 underline-offset-2"
+      data-ga-event="cta_call"
+      data-ga-label={`emergenza_${contact.emergency_phone}`}
+    >
+      {contact.emergency_phone}
+    </a>
+    .
+  </p>
+  <p class="mt-2 text-xs text-gray-500 dark:text-slate-400">
+    ProntoFarmacie.it non fornisce diagnosi, prescrizioni o consulenza medica. La farmacia può dispensare
+    farmaci con prescrizione solo in presenza di ricetta valida, salvo casi particolari valutati dal farmacista.
+  </p>
+  {contact.official_source_name && contact.official_source_url && (
+    <p class="mt-3 text-xs text-gray-500 dark:text-slate-400">
+      Fonte:
+      {' '}
+      <a
+        href={contact.official_source_url}
+        target="_blank"
+        rel="nofollow noopener"
+        class="font-medium text-sky-700 hover:underline dark:text-sky-300"
+      >
+        {contact.official_source_name}
+      </a>
+      {contact.last_verified && <> · verificato il {contact.last_verified}</>}
+    </p>
+  )}
+
+  <div class="mt-8 border-t border-sky-100 pt-6 dark:border-sky-800">
+    <h3 class="text-lg font-semibold text-gray-900 dark:text-slate-50">Domande su ricetta e Continuità Assistenziale</h3>
+    <div class="mt-4 space-y-4">
+      {faqItems.map((item) => (
+        <div>
+          <h4 class="text-sm font-semibold text-gray-900 dark:text-slate-100">{item.question}</h4>
+          <p class="mt-1 text-sm leading-6 text-gray-600 dark:text-slate-300">{item.answer}</p>
+        </div>
+      ))}
+    </div>
+  </div>
+</section>

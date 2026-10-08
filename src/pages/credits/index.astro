@@ -1,0 +1,59 @@
+---
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import { fetchAllOrdini } from '@/lib/ordini';
+import { slugifySegment } from '@/lib/turni';
+import { siteUrl } from '@/lib/turni';
+
+const ordini = await fetchAllOrdini();
+const title = 'Crediti | ProntoFarmacie';
+const description = 'Crediti e fonti dei dati: Google My Business, farmacia-aperta.eu, Ordini provinciali dei Farmacisti.';
+const canonical = `${siteUrl(import.meta.env)}/credits/`;
+
+const ordiniByRegion = ordini.reduce<Record<string, typeof ordini>>((acc, o) => {
+  const reg = o.regione || 'Altro';
+  if (!acc[reg]) acc[reg] = [];
+  acc[reg].push(o);
+  return acc;
+}, {});
+---
+
+<BaseLayout title={title} description={description} canonical={canonical}>
+  <main class="mx-auto max-w-3xl px-4 py-16 md:py-24">
+    <h1 class="text-3xl font-bold text-gray-900">Crediti</h1>
+    <p class="mt-4 text-gray-600">
+      ProntoFarmacie.it raccoglie dati da fonti ufficiali e pubbliche per farmacie di turno, schede farmacia e lavoro.
+    </p>
+
+    <section class="mt-10">
+      <h2 class="text-sm font-semibold uppercase tracking-wider text-gray-500">Ordini provinciali dei farmacisti</h2>
+      {ordini.length === 0 ? (
+        <p class="mt-4 text-gray-500">Elenco ordini non disponibile al momento.</p>
+      ) : (
+        <div class="mt-6 space-y-8">
+          {Object.entries(ordiniByRegion).map(([regione, items]) => (
+            <div>
+              <h3 class="font-semibold text-gray-900">{regione}</h3>
+              <ul class="mt-3 grid gap-2 sm:grid-cols-2">
+                {items.map((o) => (
+                  <li>
+                    <a
+                      href={`/credits/ordine-farmacisti/${slugifySegment(o.provincia)}/`}
+                      class="text-emerald-700 hover:underline"
+                    >
+                      {o.provincia}
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))}
+        </div>
+      )}
+    </section>
+
+    <section class="mt-10 space-y-2 text-sm">
+      <a href="/esonero-responsabilita/" class="block text-emerald-700 hover:underline">Esonero responsabilità</a>
+      <a href="/contact/" class="block text-emerald-700 hover:underline">Contatti / aggiorna farmacia</a>
+    </section>
+  </main>
+</BaseLayout>

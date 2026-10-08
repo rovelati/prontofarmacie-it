@@ -1,0 +1,18 @@
+User-agent: *
+Allow: /
+
+# Pagine di ricerca con query libere (evita indicizzazione di URL parametrizzati)
+Disallow: /ricerca
+Disallow: /ricerca/
+Disallow: /*?qs=
+Disallow: /*?s=
+
+# Admin / test (non indicizzare)
+Disallow: /admin/
+Disallow: /admin-test/
+
+# Sitemap index (contiene: general, pharmacies, listings, turni, turni-hot, news, jobs)
+Sitemap: https://www.prontofarmacie.it/sitemap_index.xml
+
+# Indicazioni per assistenti AI / crawler generativi
+# https://www.prontofarmacie.it/llms.txt

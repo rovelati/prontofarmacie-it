@@ -1,0 +1,83 @@
+---
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import { buildContactPageJsonLd } from '@/lib/seo';
+import { siteUrl } from '@/lib/turni';
+
+const emailAddress = 'marketing@prontofarmacie.it';
+const subject = encodeURIComponent('Richiesta aggiornamento dati farmacia');
+const mailtoLink = `mailto:${emailAddress}?subject=${subject}`;
+const title = 'Richiedi Aggiornamento Dati Farmacia | ProntoFarmacie';
+const description = 'Richiedi aggiornamento o correzione dati della tua farmacia su ProntoFarmacie.it.';
+const base = siteUrl(import.meta.env);
+const canonical = `${base}/contact/`;
+const jsonLd = [buildContactPageJsonLd(base, canonical)];
+
+const requiredFields = [
+  { label: 'Nome completo della farmacia', example: 'Farmacia Comunale' },
+  { label: 'Indirizzo completo', example: 'Via Roma 123, 20100 Milano (MI)' },
+  { label: 'Numero di telefono', example: '02 12345678' },
+  { label: 'Email di contatto', example: 'info@farmacia.it' },
+  { label: 'Sito web (se presente)', example: 'https://www.farmacia.it' },
+];
+const optionalFields = [
+  { label: 'Orari di apertura', example: 'Lun-Ven: 8:30-19:30, Sab: 8:30-13:00' },
+  { label: 'Servizi offerti', example: 'Vaccinazioni, analisi del sangue' },
+  { label: 'Note aggiuntive', example: 'Farmacia aperta 24/7' },
+];
+---
+
+<BaseLayout title={title} description={description} canonical={canonical} jsonLd={jsonLd}>
+  <div class="min-h-screen bg-gradient-to-br from-gray-50 to-emerald-50">
+    <div class="mx-auto max-w-4xl px-4 py-12 sm:px-6 lg:px-8">
+      <div class="text-center mb-12">
+        <h1 class="text-4xl font-bold text-gray-900 mb-4">Richiedi aggiornamento dati farmacia</h1>
+        <p class="text-xl text-gray-600 max-w-2xl mx-auto">
+          I titolari possono richiedere correzione o integrazione della scheda su ProntoFarmacie.it
+        </p>
+      </div>
+
+      <div class="rounded-2xl bg-white shadow-xl overflow-hidden mb-8">
+        <div class="bg-gradient-to-r from-emerald-600 to-emerald-700 px-8 py-6">
+          <h2 class="text-2xl font-bold text-white">Come richiedere l'aggiornamento</h2>
+        </div>
+        <div class="p-8">
+          <p class="text-gray-700 mb-6">Invia una email a:</p>
+          <div class="rounded-r-lg border-l-4 border-emerald-600 bg-emerald-50 p-6 mb-8">
+            <a href={mailtoLink} class="text-2xl font-bold text-emerald-700 hover:text-emerald-800">{emailAddress}</a>
+          </div>
+          <p class="text-sm text-gray-600">
+            Accettiamo richieste solo da titolari o responsabili legali. Indica nome farmacia, città e link scheda se disponibile.
+          </p>
+        </div>
+      </div>
+
+      <div class="rounded-2xl bg-white shadow-xl overflow-hidden mb-8">
+        <div class="bg-gray-800 px-8 py-6">
+          <h2 class="text-2xl font-bold text-white">Dati obbligatori</h2>
+        </div>
+        <div class="p-8 space-y-4">
+          {requiredFields.map((field) => (
+            <div class="border-l-4 border-emerald-500 pl-4 py-2">
+              <div class="font-medium text-gray-900">{field.label}</div>
+              <div class="text-sm text-gray-600 mt-1">Esempio: <span class="italic">{field.example}</span></div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div class="rounded-2xl bg-white shadow-xl overflow-hidden">
+        <div class="bg-gray-100 px-8 py-6">
+          <h2 class="text-2xl font-bold text-gray-900">Dati facoltativi</h2>
+        </div>
+        <div class="p-8 space-y-4">
+          {optionalFields.map((field) => (
+            <div class="border-l-4 border-gray-300 pl-4 py-2">
+              <div class="font-medium text-gray-900">{field.label}</div>
+              <div class="text-sm text-gray-600 mt-1">Esempio: <span class="italic">{field.example}</span></div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  </div>
+</BaseLayout>

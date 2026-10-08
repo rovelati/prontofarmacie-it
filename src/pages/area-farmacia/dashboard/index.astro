@@ -1,0 +1,14 @@
+---
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import PharmacyDashboardApp from '@/components/marketplace/PharmacyDashboardApp';
+import { siteUrl } from '@/lib/turni';
+
+const title = 'Dashboard farmacia | ProntoFarmacie';
+const canonical = `${siteUrl(import.meta.env)}/area-farmacia/dashboard/`;
+---
+
+<BaseLayout title={title} description="Gestione scheda farmacia." canonical={canonical} noindex>
+  <div class="mx-auto max-w-4xl px-4 py-10 sm:px-6">
+    <PharmacyDashboardApp client:only="react" />
+  </div>
+</BaseLayout>

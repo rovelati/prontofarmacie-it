@@ -1,0 +1,14 @@
+---
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import JobSubmissionApp from '@/components/jobs/JobSubmissionApp';
+import { siteUrl } from '@/lib/turni';
+
+const title = 'Pubblica la tua offerta di lavoro in farmacia | ProntoFarmacie';
+const description =
+  "Pagina dedicata alle farmacie che assumono: inserisci la sede, i dettagli dell'offerta e il contatto candidature. L'annuncio viene pubblicato nella sezione lavoro dopo revisione.";
+const canonical = `${siteUrl(import.meta.env)}/lavoro/inserisci-annuncio/`;
+---
+
+<BaseLayout title={title} description={description} canonical={canonical}>
+  <JobSubmissionApp client:only="react" />
+</BaseLayout>

@@ -1,0 +1,48 @@
+---
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import { CATEGORY_SLUG_TO_GROUP, fetchNewsArticles, NEWS_CATEGORY_TABS } from '@/lib/news';
+import { buildNewsCollectionJsonLd } from '@/lib/seo';
+import { siteUrl } from '@/lib/turni';
+
+const { categoria } = Astro.params;
+const categoryGroup = categoria ? CATEGORY_SLUG_TO_GROUP[categoria] : undefined;
+if (!categoria || !categoryGroup) return Astro.redirect('/notizie-farmacie-e-salute/', 302);
+
+const posts = await fetchNewsArticles({ limit: 24, categoryGroup });
+const title = `Notizie: ${categoryGroup} | ProntoFarmacie`;
+const description = `Articoli su ${categoryGroup}.`;
+const base = siteUrl(import.meta.env);
+const canonical = `${base}/notizie-farmacie-e-salute/categorie/${categoria}/`;
+const jsonLd = [buildNewsCollectionJsonLd(base, canonical, title, description, posts)];
+---
+
+<BaseLayout title={title} description={description} canonical={canonical} jsonLd={jsonLd}>
+  <div class="mx-auto max-w-6xl px-4 py-10 sm:px-6 lg:px-8">
+    <h1 class="text-3xl font-bold text-gray-900">{categoryGroup}</h1>
+    <nav class="mt-6 flex flex-wrap gap-2">
+      {NEWS_CATEGORY_TABS.map((tab) => (
+        <a
+          href={tab.path}
+          class={`rounded-full px-4 py-2 text-sm font-semibold ${
+            tab.id === categoryGroup ? 'bg-emerald-600 text-white' : 'border border-gray-200 bg-white text-gray-700'
+          }`}
+        >
+          {tab.label}
+        </a>
+      ))}
+    </nav>
+    <div class="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+      {posts.map((post) => (
+        <article class="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm">
+          {post.image && <img src={post.image} alt="" class="h-44 w-full object-cover" loading="lazy" />}
+          <div class="p-5">
+            <h2 class="text-lg font-bold">
+              <a href={`/notizie-farmacie-e-salute/${post.slug}/`} class="hover:text-emerald-700">{post.title}</a>
+            </h2>
+            <p class="mt-2 text-sm text-gray-600 line-clamp-3">{post.excerpt.replace(/[#*<>\/]/g, ' ').slice(0, 160)}</p>
+          </div>
+        </article>
+      ))}
+    </div>
+  </div>
+</BaseLayout>

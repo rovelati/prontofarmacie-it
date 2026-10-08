@@ -1,0 +1,277 @@
+---
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import HeroPillLink from '@/components/HeroPillLink.astro';
+import HeroSearchForm from '@/components/HeroSearchForm.astro';
+import SectionHero from '@/components/SectionHero.astro';
+import { fetchHomeData, type HomePharmacy } from '@/lib/home';
+import { resolveIpGeo } from '@/lib/ipGeo';
+import { TOP_PROVINCES } from '@/lib/locationUtils';
+import { PROVINCE_NAME_BY_CODE } from '@/lib/provinceNames';
+import {
+  siteUrl,
+  slugifySegment,
+  cityTurniUrl,
+  provinceTurniUrl,
+  provinceSlugFromCode,
+} from '@/lib/turni';
+import { jobDetailPath } from '@/lib/jobs';
+import { ORGANIZATION_DESCRIPTION } from '@/lib/seo';
+
+let clientAddress: string | null = null;
+try {
+  clientAddress = Astro.clientAddress ?? null;
+} catch {
+  clientAddress = null;
+}
+
+const geo = await resolveIpGeo(Astro.request, clientAddress);
+const { pharmacies, news, jobs, jobsLocalized } = await fetchHomeData(geo);
+
+if (geo) {
+  Astro.response.headers.set('Cache-Control', 'private, max-age=120');
+}
+
+const base = siteUrl(import.meta.env);
+const title = 'ProntoFarmacie - Farmacie di Turno, Aperte Ora e Offerte Lavoro';
+const description =
+  'Trova farmacie di turno, farmacie aperte ora, offerte di lavoro in farmacia. Orari, mappa e contatti aggiornati per tutta Italia.';
+const canonical = `${base}/`;
+
+const topCities = [
+  'Milano', 'Roma', 'Napoli', 'Torino', 'Bologna', 'Firenze',
+  'Genova', 'Venezia', 'Verona', 'Padova', 'Palermo', 'Catania',
+];
+
+/** Preferisci città DB (IT) rispetto al label geo-IP (spesso in inglese). */
+function resolveNearCityLabel(rows: HomePharmacy[], geoCity?: string | null): string | null {
+  const counts = new Map<string, number>();
+  for (const row of rows) {
+    const city = (row.city || '').trim();
+    if (!city) continue;
+    counts.set(city, (counts.get(city) || 0) + 1);
+  }
+  let best: string | null = null;
+  let bestN = 0;
+  for (const [city, n] of counts) {
+    if (n > bestN) {
+      best = city;
+      bestN = n;
+    }
+  }
+  if (best) return best;
+  const g = (geoCity || '').trim();
+  return g || null;
+}
+
+const nearCity = resolveNearCityLabel(pharmacies, geo?.city);
+const nearHeading = nearCity ? `Farmacie vicino a ${nearCity}` : 'Farmacie vicino a te';
+
+function resolveNearProvince(rows: HomePharmacy[]): { code: string; name: string; slug: string } | null {
+  const counts = new Map<string, number>();
+  for (const row of rows) {
+    const code = (row.province || '').trim().toUpperCase();
+    if (!code || !PROVINCE_NAME_BY_CODE[code]) continue;
+    counts.set(code, (counts.get(code) || 0) + 1);
+  }
+  let best: string | null = null;
+  let bestN = 0;
+  for (const [code, n] of counts) {
+    if (n > bestN) {
+      best = code;
+      bestN = n;
+    }
+  }
+  if (!best) return null;
+  const name = PROVINCE_NAME_BY_CODE[best];
+  const slug = provinceSlugFromCode(best) || slugifySegment(name);
+  return { code: best, name, slug };
+}
+
+const nearProvince = resolveNearProvince(pharmacies);
+const nearCityTurniHref = nearCity ? cityTurniUrl(import.meta.env, slugifySegment(nearCity)) : null;
+const nearProvinceTurniHref = nearProvince
+  ? provinceTurniUrl(import.meta.env, nearProvince.slug)
+  : null;
+
+const jobsHeading =
+  jobsLocalized && nearCity
+    ? `Offerte di lavoro vicino a ${nearCity}`
+    : jobsLocalized && nearProvince
+      ? `Offerte di lavoro in provincia di ${nearProvince.name}`
+      : 'Offerte di lavoro';
+const jobsCityHref = nearCity ? `/lavoro/${slugifySegment(nearCity)}/tutte/` : null;
+const jobsProvinceHref = nearProvince ? `/lavoro/${nearProvince.slug}/tutte/` : null;
+
+function formatDistanceKm(km?: number): string {
+  if (km == null || !Number.isFinite(km)) return '';
+  if (km < 1) return `${Math.round(km * 1000)} m`;
+  return `${km.toFixed(1).replace('.', ',')} km`;
+}
+---
+
+<BaseLayout title={title} description={description} canonical={canonical}>
+  <SectionHero
+    eyebrow="Portale farmacie"
+    title="Farmacie di turno, schede e lavoro in farmacia"
+    description="Orari aggiornati, mappe, telefono e offerte di lavoro in un unico posto."
+  >
+    <HeroSearchForm action="/listafarmacie/cerca" label="Cerca farmacia o località" />
+    <HeroPillLink slot="footer" href="/farmacie-di-turno/?near=1" variant="solid">Vicino a me</HeroPillLink>
+    <HeroPillLink slot="footer" href="/farmacie-di-turno/">Farmacie di turno</HeroPillLink>
+    <HeroPillLink slot="footer" href="/lavoro/">Offerte lavoro</HeroPillLink>
+  </SectionHero>
+
+  <div class="page-section pt-8 sm:pt-12">
+    <section>
+      <div class="mb-6 flex items-end justify-between gap-4">
+        <h2 class="section-heading">Grandi città</h2>
+        <a href="/listafarmacie/italia/" class="text-sm font-semibold text-emerald-700 hover:underline">Tutte le località →</a>
+      </div>
+      <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        {topCities.map((city) => {
+          const slug = slugifySegment(city);
+          return (
+            <a
+              href={cityTurniUrl(import.meta.env, slug)}
+              class="rounded-xl border border-gray-200 bg-white p-4 shadow-sm hover:border-emerald-300 hover:bg-emerald-50 max-sm:p-3.5"
+            >
+              <p class="font-semibold text-gray-900">{city}</p>
+              <p class="mt-1 text-xs text-emerald-700">Turni aperti ora</p>
+            </a>
+          );
+        })}
+      </div>
+    </section>
+
+    {pharmacies.length > 0 && (
+      <section>
+        <div class="mb-6 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <h2 class="section-heading">{nearHeading}</h2>
+            <p class="mt-1 text-sm text-gray-500">Posizione stimata dalla rete · per risultati più precisi usa GPS</p>
+          </div>
+          <div class="flex flex-wrap gap-x-4 gap-y-1 text-sm font-semibold text-emerald-700">
+            <a href="/farmacie-di-turno/?near=1" class="hover:underline">Vicino a me →</a>
+            {nearCityTurniHref && nearCity && (
+              <a href={nearCityTurniHref} class="hover:underline">
+                Turni aperti a {nearCity} →
+              </a>
+            )}
+            {nearProvinceTurniHref && nearProvince && (
+              <a href={nearProvinceTurniHref} class="hover:underline">
+                Turni in provincia di {nearProvince.name} →
+              </a>
+            )}
+          </div>
+        </div>
+        <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {pharmacies.map((p) => (
+            <a
+              href={p.prontofarmacie_slug ? `/farmacia/${p.prontofarmacie_slug}/` : '#'}
+              class="rounded-xl border border-gray-200 bg-white p-4 shadow-sm hover:border-emerald-300"
+            >
+              <div class="flex items-start justify-between gap-2">
+                <p class="font-semibold text-gray-900">{p.name}</p>
+                {p.distanceKm != null && (
+                  <span class="shrink-0 text-xs font-medium text-sky-700">{formatDistanceKm(p.distanceKm)}</span>
+                )}
+              </div>
+              <p class="text-sm text-gray-500">{p.city}{p.province ? ` (${p.province})` : ''}</p>
+            </a>
+          ))}
+        </div>
+      </section>
+    )}
+
+    {news.length > 0 && (
+      <section>
+        <div class="mb-6 flex items-end justify-between">
+          <h2 class="section-heading">Notizie</h2>
+          <a href="/notizie-farmacie-e-salute/" class="text-sm font-semibold text-emerald-700 hover:underline">Tutte →</a>
+        </div>
+        <div class="grid gap-4 lg:grid-cols-3">
+          {news.map((post) => (
+            <a href={`/notizie-farmacie-e-salute/${post.slug}/`} class="rounded-xl border border-gray-200 bg-white p-5 shadow-sm hover:border-emerald-300">
+              <p class="text-xs font-semibold uppercase text-emerald-600">{post.categoryGroup}</p>
+              <h3 class="mt-2 font-semibold text-gray-900 line-clamp-2">{post.title}</h3>
+              <p class="mt-2 text-sm text-gray-600 line-clamp-3">{post.excerpt.replace(/[#*]/g, '').slice(0, 140)}</p>
+            </a>
+          ))}
+        </div>
+      </section>
+    )}
+
+    {jobs.length > 0 && (
+      <section>
+        <div class="mb-6 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <h2 class="section-heading">{jobsHeading}</h2>
+            {jobsLocalized && (
+              <p class="mt-1 text-sm text-gray-500">Annunci più vicini alla tua zona · per risultati più precisi usa GPS</p>
+            )}
+          </div>
+          <div class="flex flex-wrap gap-x-4 gap-y-1 text-sm font-semibold text-emerald-700">
+            <a href="/lavoro-vicino-a-te/" class="hover:underline">Vicino a me →</a>
+            {jobsCityHref && nearCity && (
+              <a href={jobsCityHref} class="hover:underline">
+                Lavoro a {nearCity} →
+              </a>
+            )}
+            {jobsProvinceHref && nearProvince && nearProvince.slug !== slugifySegment(nearCity || '') && (
+              <a href={jobsProvinceHref} class="hover:underline">
+                Provincia di {nearProvince.name} →
+              </a>
+            )}
+            <a href="/lavoro/" class="hover:underline">Tutte →</a>
+          </div>
+        </div>
+        <ul class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {jobs.map((job) => (
+            <li>
+              <a href={jobDetailPath(job)} class="block rounded-xl border border-gray-200 bg-white p-4 shadow-sm hover:border-emerald-300">
+                <div class="flex items-start justify-between gap-2">
+                  <p class="font-semibold text-gray-900">{job.title_seo || job.title}</p>
+                  {job.distanceKm != null && (
+                    <span class="shrink-0 text-xs font-medium text-sky-700">{formatDistanceKm(job.distanceKm)}</span>
+                  )}
+                </div>
+                <p class="text-sm text-gray-500">{job.pharmacy?.city}{job.pharmacy?.province ? ` (${job.pharmacy.province})` : ''}</p>
+              </a>
+            </li>
+          ))}
+        </ul>
+      </section>
+    )}
+
+    <section id="chi-siamo" class="section-card">
+      <h2 class="text-lg font-semibold text-gray-900">Chi è ProntoFarmacie</h2>
+      <p class="mt-3 text-sm leading-relaxed text-gray-700">{ORGANIZATION_DESCRIPTION}</p>
+      <p class="mt-3 text-sm leading-relaxed text-gray-700">
+        I turni mostrati sulle pagine città e provincia arrivano da fonti ufficiali territoriali
+        (ordini dei farmacisti, ASL e portali come Federfarma o PharmAround, dove disponibili).
+        Ogni elenco indica data di aggiornamento e fonte: prima di partire conviene sempre chiamare
+        la farmacia per confermare orario, disponibilità del farmaco e eventuale sovrapprezzo.
+      </p>
+      <p class="mt-3 text-sm leading-relaxed text-gray-700">
+        I titolari possono
+        <a href="/area-farmacia/" class="font-semibold text-emerald-700 hover:underline">verificare la scheda</a>
+        e scrivere a
+        <a href="mailto:marketing@prontofarmacie.it" class="font-semibold text-emerald-700 hover:underline">marketing@prontofarmacie.it</a>.
+      </p>
+    </section>
+
+    <section class="section-card">
+      <h2 class="text-lg font-semibold text-gray-900">Province principali</h2>
+      <div class="mt-4 flex flex-wrap gap-2">
+        {TOP_PROVINCES.map(({ name, slug }) => (
+          <a
+            href={provinceTurniUrl(import.meta.env, slug)}
+            class="rounded-full bg-emerald-50 px-3 py-1 text-sm font-medium text-emerald-800 hover:bg-emerald-100"
+          >
+            {name}
+          </a>
+        ))}
+      </div>
+    </section>
+  </div>
+</BaseLayout>

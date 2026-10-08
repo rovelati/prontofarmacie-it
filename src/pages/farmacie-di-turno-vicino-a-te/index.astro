@@ -1,0 +1,10 @@
+---
+/**
+ * Legacy URL: 301 → hub turni (geo su /farmacie-di-turno/?lat=&lng=).
+ * Query string preservata.
+ */
+export const prerender = false;
+
+const search = Astro.url.search || '';
+return Astro.redirect(`/farmacie-di-turno/${search}`, 301);
+---

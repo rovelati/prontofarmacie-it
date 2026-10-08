@@ -1,0 +1,101 @@
+---
+interface Props {
+  /** Chi vuoi acquisire */
+  audience: 'pharmacy' | 'job_seeker';
+  /** Variante layout */
+  variant?: 'banner' | 'compact';
+  /** Titolo opzionale (override) */
+  title?: string;
+  /** Testo opzionale (override) */
+  lead?: string;
+  /** Eyebrow opzionale */
+  kicker?: string;
+  /** Label CTA primaria */
+  primaryLabel?: string;
+}
+
+const { audience, variant = 'banner', title, lead, kicker, primaryLabel } = Astro.props;
+
+const copy =
+  audience === 'pharmacy'
+    ? {
+        kicker: kicker || 'Sei il titolare o il responsabile?',
+        title: title || 'Questa è la scheda della tua farmacia?',
+        lead:
+          lead ||
+          'Registrati, reclama la scheda e verifica orari, contatti e listino servizi. Così i pazienti trovano dati aggiornati.',
+        primaryHref: '/area-farmacia/registrati/',
+        primaryLabel: primaryLabel || 'Registrati e verifica i dati',
+        secondaryHref: '/area-farmacia/',
+        secondaryLabel: 'Scopri l’area farmacia',
+      }
+    : {
+        kicker: kicker || 'Cerchi lavoro in farmacia?',
+        title: title || 'Ricevi solo le offerte giuste',
+        lead:
+          lead ||
+          'Crea lo spazio candidato: alert su misura, CV e profilo da condividere con i farmacisti — quando lo decidi tu.',
+        primaryHref: '/lavoro/area-candidati/registrati/',
+        primaryLabel: primaryLabel || 'Registrati come candidato',
+        secondaryHref: '/lavoro/area-candidati/',
+        secondaryLabel: 'Scopri l’area candidati',
+      };
+
+const isCompact = variant === 'compact';
+const tone =
+  audience === 'pharmacy'
+    ? 'border-emerald-200 bg-emerald-50/80 dark:border-emerald-700 dark:bg-emerald-950'
+    : 'border-teal-200 bg-teal-50/80 dark:border-teal-700 dark:bg-teal-950';
+const kickerTone =
+  audience === 'pharmacy'
+    ? 'text-emerald-800 dark:text-emerald-300'
+    : 'text-teal-800 dark:text-teal-300';
+const btnPrimary =
+  audience === 'pharmacy'
+    ? 'bg-emerald-600 hover:bg-emerald-700 dark:bg-emerald-500 dark:hover:bg-emerald-400 dark:text-emerald-950'
+    : 'bg-teal-700 hover:bg-teal-800 dark:bg-teal-500 dark:hover:bg-teal-400 dark:text-teal-950';
+---
+
+<section
+  class:list={[
+    'rounded-2xl border',
+    tone,
+    isCompact ? 'p-4 sm:p-5' : 'p-5 sm:p-6',
+  ]}
+  aria-label={copy.kicker}
+>
+  <p class:list={['text-xs font-semibold uppercase tracking-wide', kickerTone]}>{copy.kicker}</p>
+  <h2
+    class:list={[
+      'mt-1 font-bold text-gray-900 dark:text-slate-50',
+      isCompact ? 'text-base' : 'text-lg sm:text-xl',
+    ]}
+  >
+    {copy.title}
+  </h2>
+  <p
+    class:list={[
+      'mt-2 text-gray-700 dark:text-slate-200',
+      isCompact ? 'text-sm' : 'text-sm sm:text-base',
+    ]}
+  >
+    {copy.lead}
+  </p>
+  <div class="mt-4 flex flex-wrap gap-2">
+    <a
+      href={copy.primaryHref}
+      class:list={[
+        'inline-flex rounded-full px-5 py-2.5 text-sm font-semibold text-white',
+        btnPrimary,
+      ]}
+    >
+      {copy.primaryLabel}
+    </a>
+    <a
+      href={copy.secondaryHref}
+      class="inline-flex rounded-full border border-gray-300 bg-white px-5 py-2.5 text-sm font-semibold text-gray-800 hover:bg-gray-50 dark:border-slate-500 dark:bg-slate-900 dark:text-slate-100 dark:hover:bg-slate-800"
+    >
+      {copy.secondaryLabel}
+    </a>
+  </div>
+</section>

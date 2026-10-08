@@ -1,0 +1,21 @@
+---
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import { siteUrl } from '@/lib/turni';
+
+const title = 'Contatti shop | ProntoFarmacie';
+const description = 'Contatti e informazioni per gli e-commerce farmaceutici elencati su ProntoFarmacie.';
+const canonical = `${siteUrl(import.meta.env)}/shop-contatti/`;
+---
+
+<BaseLayout title={title} description={description} canonical={canonical}>
+  <main class="mx-auto max-w-3xl px-4 py-16">
+    <h1 class="text-3xl font-bold text-gray-900">Contatti shop</h1>
+    <p class="mt-4 text-gray-700">
+      Per informazioni sugli shop online consulta le schede singole o le guide reclami.
+    </p>
+    <div class="mt-6 flex flex-wrap gap-3">
+      <a href="/shop/elenco-dei-migliori-ecommerce-del-farmaco-trova-link-promo-sconti/" class="text-emerald-700 hover:underline">Elenco shop</a>
+      <a href="/shop-reclami/" class="text-emerald-700 hover:underline">Guide reclami</a>
+    </div>
+  </main>
+</BaseLayout>

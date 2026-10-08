@@ -1,0 +1,23 @@
+---
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import { getComplaintBySlug, shops } from '@/lib/shop';
+import { siteUrl } from '@/lib/turni';
+
+const title = 'Reclami farmacie online | ProntoFarmacie';
+const description = 'Guide per presentare reclami ai principali e-commerce farmaceutici.';
+const canonical = `${siteUrl(import.meta.env)}/shop-reclami/`;
+---
+
+<BaseLayout title={title} description={description} canonical={canonical}>
+  <div class="mx-auto max-w-6xl px-4 py-10 sm:px-6 lg:px-8">
+    <h1 class="text-3xl font-bold text-gray-900">Reclami shop online</h1>
+    <p class="mt-2 text-gray-600">Guide per contattare l'assistenza clienti degli shop farmaceutici.</p>
+    <ul class="mt-8 grid gap-4 sm:grid-cols-2">
+      {shops.filter((s) => s.complaintPath).map((shop) => (
+        <li class="rounded-xl border bg-white p-5 shadow-sm">
+          <a href={shop.complaintPath} class="font-semibold text-gray-900 hover:text-emerald-700">{shop.name}</a>
+        </li>
+      ))}
+    </ul>
+  </div>
+</BaseLayout>

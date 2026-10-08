@@ -1,0 +1,187 @@
+---
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import { siteUrl } from '@/lib/turni';
+import '@/styles/marketplace-landing.css';
+
+const title = 'Area candidati | Lavoro in farmacia | ProntoFarmacie';
+const description =
+  'Un punto unico per alert offerte, CV e profilo condivisibile con le farmacie — con privacy by design. Iscriviti solo se ti serve, cancella quando vuoi.';
+const canonical = `${siteUrl(import.meta.env)}/lavoro/area-candidati/`;
+const base = siteUrl(import.meta.env);
+
+const jsonLd = [
+  {
+    '@context': 'https://schema.org',
+    '@type': 'WebPage',
+    name: title,
+    description,
+    url: canonical,
+    inLanguage: 'it-IT',
+    isPartOf: { '@type': 'WebSite', name: 'ProntoFarmacie', url: `${base}/` },
+  },
+];
+---
+
+<BaseLayout title={title} description={description} canonical={canonical} jsonLd={jsonLd} noindex>
+  <link
+    rel="stylesheet"
+    href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700&family=Source+Sans+3:wght@400;600;700&display=swap"
+  />
+
+  <div class="mkt-landing">
+    <section class="mkt-hero" aria-labelledby="mkt-hero-title">
+      <div class="mkt-hero__atmosphere" aria-hidden="true"></div>
+      <div class="mkt-hero__media" aria-hidden="true">
+        <picture>
+          <source srcset="/images/candidati-hero.webp" type="image/webp" />
+          <img
+            src="/images/candidati-hero.jpg"
+            alt=""
+            width="933"
+            height="1400"
+            decoding="async"
+            fetchpriority="high"
+          />
+        </picture>
+      </div>
+      <div class="mkt-hero__inner">
+        <p class="mkt-brand">ProntoFarmacie</p>
+        <h1 id="mkt-hero-title" class="mkt-hero__title">
+          Il tuo spazio lavoro in farmacia, in un solo posto
+        </h1>
+        <p class="mkt-hero__lead">
+          Alert sulle nuove offerte, CV e profilo da condividere con i farmacisti — solo quando lo decidi tu.
+        </p>
+        <div class="mkt-hero__cta">
+          <a href="/lavoro/area-candidati/registrati/" class="mkt-btn mkt-btn--primary">
+            Crea il tuo spazio gratuito
+          </a>
+          <a href="/lavoro/area-candidati/accedi/" class="mkt-btn mkt-btn--ghost">
+            Accedi
+          </a>
+        </div>
+      </div>
+    </section>
+
+    <section class="mkt-section" aria-labelledby="perche-title">
+      <div class="mkt-section__inner">
+        <h2 id="perche-title" class="mkt-section__title">Perché lasciare i tuoi dati qui</h2>
+        <p class="mkt-section__lead">
+          Non è una newsletter generica. È uno strumento per chi cerca (o valuta) lavoro in farmacia — con controllo su
+          cosa resta pubblico.
+        </p>
+
+        <ul class="mkt-benefits">
+          <li class="mkt-benefit mkt-benefit--live">
+            <span class="mkt-benefit__tag">Disponibile ora</span>
+            <h3>Alert offerte su misura</h3>
+            <p>
+              Imposti località, raggio e ruolo. Ti scriviamo solo quando esce un’offerta pertinente — non un digest
+              quotidiano di tutto il mercato.
+            </p>
+          </li>
+          <li class="mkt-benefit">
+            <span class="mkt-benefit__tag mkt-benefit__tag--soon">In arrivo nel profilo</span>
+            <h3>CV e profilo in un punto unico</h3>
+            <p>
+              Competenze, esperienze e preferenze contrattuali restano nel tuo account: non li riscrivi a ogni
+              candidatura e li aggiorni quando cambia la tua situazione.
+            </p>
+          </li>
+          <li class="mkt-benefit">
+            <span class="mkt-benefit__tag mkt-benefit__tag--soon">In arrivo nel profilo</span>
+            <h3>Profilo condivisibile con il farmacista</h3>
+            <p>
+              Quando vuoi candidarti, condividi un link o un riepilogo controllato — non un dump dei tuoi dati a tutto
+              il network.
+            </p>
+          </li>
+        </ul>
+      </div>
+    </section>
+
+    <section class="mkt-privacy" aria-labelledby="privacy-title">
+      <div class="mkt-section__inner mkt-privacy__grid">
+        <div>
+          <p class="mkt-kicker">Privacy by design</p>
+          <h2 id="privacy-title" class="mkt-section__title">I dati restano tuoi</h2>
+          <p class="mkt-section__lead mkt-section__lead--left">
+            Ci iscriviamo solo se c’è un beneficio chiaro. Per questo il profilo candidato è costruito per il minimo
+            necessario e per il tuo controllo.
+          </p>
+        </div>
+        <ul class="mkt-privacy__list">
+          <li>
+            <strong>Finalità limitate</strong>
+            <span>Alert lavoro e gestione profilo. Niente rivendita a terzi, niente profilazione pubblicitaria.</span>
+          </li>
+          <li>
+            <strong>Condivisione esplicita</strong>
+            <span>Le farmacie non “sfogliano” il tuo CV in automatico: condividi tu, quando ti candidi.</span>
+          </li>
+          <li>
+            <strong>Disiscrizione semplice</strong>
+            <span>Metti in pausa gli alert o chiudi l’account: smettiamo di usare i dati per le notifiche.</span>
+          </li>
+          <li>
+            <strong>Separato dalla ricerca turni</strong>
+            <span
+              >Chi cerca una farmacia aperta non vede il tuo profilo. L’area candidati è un percorso dedicato.</span
+            >
+          </li>
+        </ul>
+      </div>
+    </section>
+
+    <section class="mkt-section mkt-section--muted" aria-labelledby="come-title">
+      <div class="mkt-section__inner">
+        <h2 id="come-title" class="mkt-section__title">Come funziona in tre passi</h2>
+        <p class="mkt-section__lead">Pochi minuti, senza curriculum obbligatorio all’iscrizione.</p>
+        <ol class="mkt-steps">
+          <li>
+            <span class="mkt-steps__n">1</span>
+            <div>
+              <h3>Registrati con email</h3>
+              <p>Account candidato dedicato. Nessun profilo social richiesto.</p>
+            </div>
+          </li>
+          <li>
+            <span class="mkt-steps__n">2</span>
+            <div>
+              <h3>Attiva gli alert</h3>
+              <p>Scegli città, raggio e ruolo. Ricevi mail solo sulle offerte utili.</p>
+            </div>
+          </li>
+          <li>
+            <span class="mkt-steps__n">3</span>
+            <div>
+              <h3>Completa il profilo quando serve</h3>
+              <p>CV e condivisione con le farmacie arrivano nel tuo spazio — senza rifare tutto da zero.</p>
+            </div>
+          </li>
+        </ol>
+      </div>
+    </section>
+
+    <section class="mkt-finale" aria-labelledby="finale-title">
+      <div class="mkt-section__inner mkt-finale__box">
+        <h2 id="finale-title" class="mkt-finale__title">Pronto a ricevere solo le offerte giuste?</h2>
+        <p class="mkt-finale__lead">
+          Iscriviti gratis. Puoi sfogliare comunque le offerte pubbliche senza account.
+        </p>
+        <div class="mkt-hero__cta mkt-finale__cta">
+          <a href="/lavoro/area-candidati/registrati/" class="mkt-btn mkt-btn--primary">
+            Registrati come candidato
+          </a>
+          <a href="/lavoro/" class="mkt-btn mkt-btn--ghost"> Solo sfoglia le offerte </a>
+        </div>
+        <p class="mkt-finale__note">
+          Hai già un account? <a href="/lavoro/area-candidati/accedi/">Accedi all’area candidati</a>
+          · Preferenze alert: <a href="/lavoro/area-candidati/i-miei-alert/">i miei alert</a>
+        </p>
+      </div>
+    </section>
+  </div>
+</BaseLayout>
+
+

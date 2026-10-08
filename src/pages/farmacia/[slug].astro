@@ -1,0 +1,512 @@
+---
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import GuardiaMedicaTeaser from '@/components/GuardiaMedicaTeaser.astro';
+import PharmacyMapIsland from '@/components/PharmacyMapIsland';
+import MobilePharmacyActions from '@/components/MobilePharmacyActions';
+import {
+  ensureAbsoluteUrl,
+  fetchNearbyPharmacies,
+  fetchPharmacyBySlug,
+  fetchPharmacyReviews,
+  fetchPharmacyShifts,
+  formatPharmacyDescription,
+  formatReviewDate,
+  formatWebsite,
+  normalizeImages,
+  resolvePharmacyMapCoords,
+  toTitleCase,
+} from '@/lib/pharmacy';
+import {
+  buildPharmacyJsonLd,
+  buildPharmacyPageDescription,
+  buildPharmacyPageTitle,
+  extractItalianPostalCode,
+  openingHoursLines,
+  openStatusForPharmacy,
+  pharmacyPageUrl,
+  turniLinksForPharmacy,
+} from '@/lib/pharmacySeo';
+import { fetchJobsForPharmacy, formatJobPostedLabel, jobDetailPath } from '@/lib/jobs';
+import { siteUrl, slugifySegment } from '@/lib/turni';
+import { buildDirectionsHref, buildMapEmbedUrl, hasUsableCoords } from '@/lib/directions';
+import MarketplaceSignupCta from '@/components/marketplace/MarketplaceSignupCta.astro';
+import { buildTurniAttribution, fetchTurniSourceById } from '@/lib/turniSources';
+
+const { slug } = Astro.params;
+if (!slug) return Astro.redirect('/', 302);
+
+const normalizedSlug = slug.replace(/\/$/, '');
+const pharmacy = await fetchPharmacyBySlug(normalizedSlug);
+
+if (!pharmacy) {
+  Astro.response.status = 404;
+  return Astro.rewrite('/404');
+}
+
+const pharmacyCitySlug = pharmacy.city ? slugifySegment(String(pharmacy.city)) : null;
+
+const [shifts, reviews, nearby, mapCoords, pharmacyJobsResult, turniSource] = await Promise.all([
+  fetchPharmacyShifts(pharmacy.id),
+  fetchPharmacyReviews(pharmacy.id),
+  fetchNearbyPharmacies(pharmacy),
+  resolvePharmacyMapCoords(pharmacy),
+  pharmacyCitySlug
+    ? fetchJobsForPharmacy(pharmacyCitySlug, pharmacy.name || '', 4)
+    : Promise.resolve({ jobs: [], exactMatch: false }),
+  fetchTurniSourceById(import.meta.env, pharmacy.turni_source_id as number | null | undefined),
+]);
+const { jobs: pharmacyJobs, exactMatch: pharmacyJobsExactMatch } = pharmacyJobsResult;
+
+const canonical = pharmacyPageUrl(import.meta.env, normalizedSlug);
+const title = buildPharmacyPageTitle(pharmacy, shifts);
+const description = buildPharmacyPageDescription(pharmacy, shifts);
+const status = openStatusForPharmacy(pharmacy, shifts);
+const guardiaCity = pharmacy.city ? toTitleCase(pharmacy.city) : null;
+const guardiaCitySlug = pharmacyCitySlug;
+const guardiaProvinceCode = pharmacy.province ? String(pharmacy.province).toUpperCase() : null;
+const isOpenOnTurno = status.isOpen && status.hasOfficialShift;
+const jsonLd = buildPharmacyJsonLd(import.meta.env, pharmacy, normalizedSlug, shifts, nearby, {
+  coords: mapCoords,
+});
+const hoursLines = openingHoursLines(pharmacy);
+const images = normalizeImages(pharmacy.images);
+const ogImage = ensureAbsoluteUrl(images[0] || '/favicon.ico', siteUrl(import.meta.env));
+const turniLinks = turniLinksForPharmacy(import.meta.env, pharmacy);
+const lat = mapCoords?.lat ?? (pharmacy.latitude != null ? Number(pharmacy.latitude) : null);
+const lng = mapCoords?.lng ?? (pharmacy.longitude != null ? Number(pharmacy.longitude) : null);
+const hasLeafletMap = hasUsableCoords(lat, lng);
+const mapEmbedUrl = hasLeafletMap
+  ? ''
+  : buildMapEmbedUrl({
+      lat,
+      lng,
+      address: pharmacy.address,
+      name: pharmacy.name,
+      city: pharmacy.city,
+      province: pharmacy.province,
+    });
+const showMap = hasLeafletMap || Boolean(mapEmbedUrl);
+const directionsHref = buildDirectionsHref({
+  lat,
+  lng,
+  address: pharmacy.address,
+  name: pharmacy.name,
+  city: pharmacy.city,
+  province: pharmacy.province,
+});
+const phoneDigits = pharmacy.phone ? String(pharmacy.phone).replace(/\D/g, '') : '';
+const callButtonClass = status.isOpen
+  ? 'inline-flex items-center rounded-full bg-emerald-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-emerald-700'
+  : 'inline-flex items-center rounded-full bg-amber-400 px-5 py-2.5 text-sm font-semibold text-amber-950 hover:bg-amber-500';
+const website = formatWebsite(pharmacy.website as string | undefined);
+const statusColor =
+  status.isOpen
+    ? 'bg-emerald-600 text-white dark:bg-emerald-500 dark:text-emerald-950'
+    : status.color === 'amber'
+      ? 'bg-amber-500 text-amber-950 dark:bg-amber-400 dark:text-amber-950'
+      : 'bg-gray-200 text-gray-800 dark:bg-slate-700 dark:text-slate-100';
+const descriptionBlocks = formatPharmacyDescription(pharmacy.description);
+const turniAttribution = buildTurniAttribution({
+  updatedAt: pharmacy.turni_updated_at,
+  source: turniSource,
+  provinceCode: pharmacy.province,
+});
+const visibleReviews = reviews.filter((r) => r.comment?.trim() || r.reviewer_name?.trim());
+const postalCode = extractItalianPostalCode(pharmacy);
+const addressLine = [pharmacy.address, postalCode && !String(pharmacy.address || '').includes(postalCode) ? postalCode : null]
+  .filter(Boolean)
+  .join(', ');
+---
+
+<BaseLayout title={title} description={description} canonical={canonical} jsonLd={jsonLd}>
+  <article class="mx-auto max-w-5xl px-4 py-8 pb-28 sm:px-6 lg:px-8">
+    <header class="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm sm:p-8">
+      <div class="flex flex-wrap items-start justify-between gap-4">
+        <div>
+          <span class={`inline-flex rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-wide ${statusColor}`}>
+            {status.label}
+          </span>
+          <h1 class="mt-3 text-3xl font-bold text-gray-900 sm:text-4xl">{pharmacy.name}</h1>
+          {pharmacy.city && (
+            <p class="mt-1 text-sm font-medium uppercase tracking-wide text-gray-500">
+              {toTitleCase(pharmacy.city)}{pharmacy.province ? ` (${pharmacy.province})` : ''}
+            </p>
+          )}
+          {addressLine && <p class="mt-3 text-gray-700">{addressLine}</p>}
+          <p class="mt-2 text-sm font-semibold text-emerald-700 dark:text-emerald-300">{status.detail}</p>
+          {turniAttribution && (
+            <p class="mt-3 inline-flex flex-wrap items-center gap-x-1.5 gap-y-1 rounded-lg border border-sky-200 bg-sky-50 px-3 py-1.5 text-xs font-medium text-sky-900 dark:border-sky-800 dark:bg-sky-950 dark:text-sky-100">
+              <span>{turniAttribution.updatedLabel}</span>
+              {turniAttribution.showSource && turniAttribution.sourceName && (
+                <>
+                  <span class="font-normal text-sky-700/70 dark:text-sky-300/70" aria-hidden="true">·</span>
+                  <span class="font-normal">
+                    Fonte:{' '}
+                    {turniAttribution.sourceUrl ? (
+                      <a
+                        href={turniAttribution.sourceUrl}
+                        target="_blank"
+                        rel="noopener noreferrer nofollow"
+                        class="font-semibold underline decoration-sky-400/60 underline-offset-2 hover:text-sky-950 dark:hover:text-white"
+                      >
+                        {turniAttribution.sourceName}
+                      </a>
+                    ) : (
+                      <span class="font-semibold">{turniAttribution.sourceName}</span>
+                    )}
+                  </span>
+                </>
+              )}
+            </p>
+          )}
+        </div>
+        {pharmacy.rating_avg_cached != null && (pharmacy.rating_count_cached ?? 0) > 0 && (
+          <div class="rounded-xl bg-amber-50 px-4 py-3 text-center dark:bg-amber-950 dark:ring-1 dark:ring-amber-700">
+            <p class="text-2xl font-bold text-amber-700 dark:text-amber-300">{Number(pharmacy.rating_avg_cached).toFixed(1)}</p>
+            <p class="text-xs text-amber-800 dark:text-amber-200">{pharmacy.rating_count_cached} recensioni</p>
+          </div>
+        )}
+      </div>
+
+      <div class="mt-6 flex flex-wrap gap-3">
+        {phoneDigits && (
+          <a
+            href={`tel:${phoneDigits}`}
+            class={callButtonClass}
+            data-ga-event="cta_call"
+            data-ga-label="chiama_scheda"
+            data-ga-pharmacy={pharmacy.prontofarmacie_slug || undefined}
+          >
+            Chiama {pharmacy.phone}
+          </a>
+        )}
+        {directionsHref && (
+          <a
+            href={directionsHref}
+            target="_blank"
+            rel="noopener noreferrer"
+            class="inline-flex items-center rounded-full border border-gray-300 bg-white px-5 py-2.5 text-sm font-semibold text-gray-800 hover:bg-gray-50"
+            data-ga-event="cta_directions"
+            data-ga-label="indicazioni_scheda"
+            data-ga-pharmacy={pharmacy.prontofarmacie_slug || undefined}
+          >
+            Indicazioni
+          </a>
+        )}
+        {website && (
+          <a
+            href={website}
+            target="_blank"
+            rel="noopener noreferrer nofollow"
+            class="inline-flex items-center rounded-full border border-gray-300 bg-white px-5 py-2.5 text-sm font-semibold text-gray-800 hover:bg-gray-50"
+            data-ga-event="cta_website"
+            data-ga-label="sito_web"
+            data-ga-pharmacy={pharmacy.prontofarmacie_slug || undefined}
+          >
+            Sito web
+          </a>
+        )}
+      </div>
+    </header>
+
+    {isOpenOnTurno && (
+      <GuardiaMedicaTeaser
+        city={guardiaCity}
+        provinceCode={guardiaProvinceCode}
+        citySlug={guardiaCitySlug}
+      />
+    )}
+
+    {images.length > 0 && (
+      <div class="mt-8 overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm">
+        <img
+          src={ensureAbsoluteUrl(images[0], siteUrl(import.meta.env))}
+          alt={pharmacy.name || 'Farmacia'}
+          class="h-64 w-full object-cover sm:h-80"
+          loading="eager"
+        />
+      </div>
+    )}
+
+    {showMap && (
+      <section class="mt-8 overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm">
+        <div class="border-b border-gray-100 px-6 py-4">
+          <h2 class="text-xl font-bold text-gray-900">Dove si trova</h2>
+          {addressLine && <p class="mt-1 text-sm text-gray-600">{addressLine}</p>}
+        </div>
+        {hasLeafletMap ? (
+          <PharmacyMapIsland client:only="react" lat={lat!} lng={lng!} name={pharmacy.name || ''} address={pharmacy.address || ''} />
+        ) : (
+          <iframe
+            src={mapEmbedUrl}
+            class="h-72 w-full border-0 sm:h-80"
+            loading="lazy"
+            referrerpolicy="no-referrer-when-downgrade"
+            title={`Mappa ${pharmacy.name || 'Farmacia'}`}
+          ></iframe>
+        )}
+        {directionsHref && (
+          <div class="border-t border-gray-100 px-6 py-4">
+            <a
+              href={directionsHref}
+              target="_blank"
+              rel="noopener noreferrer"
+              class="inline-flex items-center rounded-full bg-emerald-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-emerald-700"
+            >
+              Apri indicazioni
+            </a>
+          </div>
+        )}
+      </section>
+    )}
+
+    {!showMap && directionsHref && (
+      <section class="mt-8 rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
+        <h2 class="text-xl font-bold text-gray-900">Come arrivare</h2>
+        {pharmacy.address && <p class="mt-2 text-sm text-gray-600">{pharmacy.address}</p>}
+        <a
+          href={directionsHref}
+          target="_blank"
+          rel="noopener noreferrer"
+          class="mt-4 inline-flex items-center rounded-full bg-emerald-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-emerald-700"
+        >
+          Apri indicazioni
+        </a>
+      </section>
+    )}
+
+    <div class="mt-8">
+      <section class="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
+        <h2 class="text-xl font-bold text-gray-900">Orari</h2>
+        {hoursLines.length > 0 ? (
+          <ul class="mt-4 space-y-2 text-sm text-gray-700">
+            {hoursLines.map((row) => (
+              <li
+                class:list={[
+                  'flex justify-between gap-4 rounded-lg px-3 py-2',
+                  row.isToday
+                    ? 'border-2 border-emerald-500 bg-emerald-50/70 font-medium text-emerald-950 dark:bg-emerald-950 dark:text-emerald-100 dark:border-emerald-400'
+                    : 'border border-transparent border-b-gray-100 pb-2',
+                ]}
+              >
+                <span class="flex items-center gap-2">
+                  {row.label}
+                  {row.isToday && (
+                    <span class="rounded-full bg-emerald-600 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-white">
+                      Oggi
+                    </span>
+                  )}
+                </span>
+                <span class="text-right">{row.ranges}</span>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p class="mt-4 text-sm text-gray-600">Orari non disponibili.</p>
+        )}
+        {turniAttribution && (
+          <p class="mt-4 rounded-lg border border-sky-100 bg-sky-50/80 px-3 py-2 text-xs text-sky-950 dark:border-sky-800 dark:bg-sky-950/60 dark:text-sky-100">
+            <span class="font-medium">{turniAttribution.updatedLabel}</span>
+            {turniAttribution.showSource && turniAttribution.sourceName && (
+              <>
+                {' '}
+                · Fonte:{' '}
+                {turniAttribution.sourceUrl ? (
+                  <a
+                    href={turniAttribution.sourceUrl}
+                    target="_blank"
+                    rel="noopener noreferrer nofollow"
+                    class="font-semibold text-sky-900 underline decoration-sky-400/60 underline-offset-2 hover:text-sky-950 dark:text-sky-100"
+                  >
+                    {turniAttribution.sourceName}
+                  </a>
+                ) : (
+                  <span class="font-semibold">{turniAttribution.sourceName}</span>
+                )}
+              </>
+            )}
+          </p>
+        )}
+        <p class="mt-4 text-sm text-gray-600">
+          Orari non corretti?
+          <a href="/area-farmacia/registrati/" class="ml-1 font-semibold text-emerald-700 hover:underline">
+            Registrati e aggiornali
+          </a>
+        </p>
+      </section>
+    </div>
+
+    <div class="mt-6">
+      <MarketplaceSignupCta
+        audience="pharmacy"
+        variant="compact"
+        title={`Verifica e migliora i dati di ${pharmacy.name}`}
+        lead="Registrati come farmacista, collega questa scheda e aggiorna orari, telefono, servizi e informazioni utili ai pazienti."
+        primaryLabel="Registrati e verifica i dati"
+      />
+    </div>
+
+    {descriptionBlocks.length > 0 && (
+      <section class="mt-8 rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
+        <h2 class="text-xl font-bold text-gray-900">Informazioni</h2>
+        {'html' in descriptionBlocks[0] ? (
+          <div class="prose prose-sm mt-4 max-w-none text-gray-700" set:html={descriptionBlocks[0].html} />
+        ) : (
+          <div class="prose prose-sm mt-4 max-w-none text-gray-700">
+            {descriptionBlocks.map((block) => (
+              'text' in block ? <p>{block.text}</p> : null
+            ))}
+          </div>
+        )}
+      </section>
+    )}
+
+    {visibleReviews.length > 0 && (
+      <section class="mt-8 rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
+        <h2 class="text-xl font-bold text-gray-900">Recensioni Google ({visibleReviews.length})</h2>
+        <ul class="mt-4 space-y-4">
+          {visibleReviews.map((review) => {
+            const reviewDate = formatReviewDate(review.created_at_g);
+            return (
+              <li class="rounded-xl border border-gray-100 bg-gray-50 p-4">
+                <div class="flex items-start gap-3">
+                  <div class="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full border bg-white">
+                    {review.reviewer_photo ? (
+                      <img
+                        src={review.reviewer_photo}
+                        alt={review.reviewer_name || 'Recensore'}
+                        class="h-10 w-10 object-cover"
+                        loading="lazy"
+                        referrerpolicy="no-referrer"
+                      />
+                    ) : (
+                      <span class="text-xs font-semibold text-gray-600">
+                        {(review.reviewer_name || 'U').slice(0, 1).toUpperCase()}
+                      </span>
+                    )}
+                  </div>
+                  <div class="min-w-0 flex-1">
+                    <div class="flex flex-wrap items-center justify-between gap-2">
+                      {review.reviewer_url ? (
+                        <a
+                          href={review.reviewer_url}
+                          target="_blank"
+                          rel="nofollow noopener noreferrer"
+                          class="font-semibold text-gray-900 hover:text-emerald-700"
+                        >
+                          {review.reviewer_name || 'Utente Google'}
+                        </a>
+                      ) : (
+                        <p class="font-semibold text-gray-900">{review.reviewer_name || 'Utente Google'}</p>
+                      )}
+                      {review.star_rating != null && (
+                        <span class="text-sm font-bold text-amber-600">{review.star_rating}/5</span>
+                      )}
+                    </div>
+                    {reviewDate && <p class="mt-0.5 text-xs text-gray-500">{reviewDate}</p>}
+                    {review.comment && (
+                      <p class="mt-2 text-sm leading-relaxed text-gray-700">{review.comment}</p>
+                    )}
+                  </div>
+                </div>
+              </li>
+            );
+          })}
+        </ul>
+      </section>
+    )}
+
+    {turniLinks.length > 0 && (
+      <section class="mt-8 rounded-2xl border border-emerald-100 bg-emerald-50 p-6">
+        <h2 class="text-lg font-bold text-emerald-900">Farmacie di turno</h2>
+        <ul class="mt-3 space-y-2">
+          {turniLinks.map((link) => (
+            <li>
+              <a href={link.href} class="text-sm font-semibold text-emerald-800 hover:underline">
+                {link.label} →
+              </a>
+            </li>
+          ))}
+        </ul>
+      </section>
+    )}
+
+    {pharmacyJobs.length > 0 && (
+      <section class="mt-8 rounded-2xl border border-violet-100 bg-violet-50/60 p-6">
+        <p class="text-xs font-semibold uppercase tracking-wide text-violet-700">Lavoro in farmacia</p>
+        <h2 class="mt-1 text-xl font-bold text-gray-900">
+          {pharmacyJobsExactMatch
+            ? 'Offerte in questa sede'
+            : guardiaCity
+              ? `Offerte recenti a ${guardiaCity}`
+              : 'Offerte recenti in zona'}
+        </h2>
+        <p class="mt-1 text-sm text-gray-600">Annunci pubblicati negli ultimi 60 giorni.</p>
+        <ul class="mt-4 space-y-2">
+          {pharmacyJobs.map((job) => {
+            const postedLabel = formatJobPostedLabel(job.date_posted);
+            return (
+              <li>
+                <a
+                  href={jobDetailPath(job)}
+                  class="block rounded-xl border border-violet-100 bg-white px-4 py-3 shadow-sm hover:border-violet-300"
+                >
+                  <p class="text-sm font-semibold text-gray-900">{job.title_seo || job.title}</p>
+                  <p class="mt-1 text-xs text-gray-500">
+                    {[job.contract_type, postedLabel].filter(Boolean).join(' · ')}
+                  </p>
+                </a>
+              </li>
+            );
+          })}
+        </ul>
+        {guardiaCitySlug && (
+          <a
+            href={`/lavoro/${guardiaCitySlug}/tutte/`}
+            class="mt-4 inline-flex text-sm font-semibold text-violet-800 hover:underline"
+          >
+            Tutte le offerte a {guardiaCity} →
+          </a>
+        )}
+      </section>
+    )}
+
+    {nearby.length > 0 && (
+      <section class="mt-8 rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
+        <h2 class="text-xl font-bold text-gray-900">
+          {pharmacy.city ? `Altre farmacie a ${toTitleCase(pharmacy.city)}` : 'Farmacie nelle vicinanze'}
+        </h2>
+        <ul class="mt-4 grid gap-3 sm:grid-cols-2">
+          {nearby.map((item) => (
+            <li>
+              <a
+                href={`/farmacia/${item.prontofarmacie_slug}/`}
+                class="block rounded-xl border border-gray-200 p-4 hover:border-emerald-300 hover:bg-emerald-50"
+              >
+                <p class="font-semibold text-gray-900">{item.name}</p>
+                <p class="text-xs text-gray-500">{item.city}{item.province ? ` (${item.province})` : ''}</p>
+              </a>
+            </li>
+          ))}
+        </ul>
+      </section>
+    )}
+
+    <div class="mt-8">
+      <MarketplaceSignupCta
+        audience="pharmacy"
+        title={`Questa è la scheda di ${pharmacy.name}?`}
+        lead="Registrati, reclama la farmacia e verifica orari, contatti e listino. Puoi anche pubblicare offerte di lavoro nella sezione dedicata."
+        primaryLabel="Registrati e verifica i dati"
+      />
+    </div>
+
+    <MobilePharmacyActions
+      client:load
+      phoneDigits={phoneDigits || undefined}
+      phoneLabel={phoneDigits ? `Chiama ${pharmacy.phone}` : undefined}
+      directionsHref={directionsHref || undefined}
+      isOpen={status.isOpen}
+    />
+  </article>
+</BaseLayout>

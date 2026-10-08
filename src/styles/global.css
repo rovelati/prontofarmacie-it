@@ -1,0 +1,378 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 222.2 84% 4.9%;
+    --card: 0 0% 100%;
+    --card-foreground: 222.2 84% 4.9%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 222.2 84% 4.9%;
+    --primary: 145 100% 34%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 210 40% 96.1%;
+    --secondary-foreground: 222.2 47.4% 11.2%;
+    --muted: 210 40% 96.1%;
+    --muted-foreground: 215.4 16.3% 46.9%;
+    --accent: 210 40% 96.1%;
+    --accent-foreground: 222.2 47.4% 11.2%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 214.3 31.8% 91.4%;
+    --input: 214.3 31.8% 91.4%;
+    --ring: 145 100% 34%;
+    --radius: 0.5rem;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --background: 222 47% 6%;
+      --foreground: 210 40% 98%;
+      --card: 217 33% 12%;
+      --card-foreground: 210 40% 98%;
+      --popover: 217 33% 12%;
+      --popover-foreground: 210 40% 98%;
+      --primary: 145 70% 42%;
+      --primary-foreground: 0 0% 100%;
+      --secondary: 217 25% 16%;
+      --secondary-foreground: 210 40% 98%;
+      --muted: 217 25% 16%;
+      --muted-foreground: 215 16% 72%;
+      --accent: 217 25% 16%;
+      --accent-foreground: 210 40% 98%;
+      --destructive: 0 72% 48%;
+      --destructive-foreground: 0 0% 100%;
+      --border: 217 20% 26%;
+      --input: 217 20% 26%;
+      --ring: 145 70% 42%;
+    }
+  }
+}
+
+.turno-filter-btn.is-active {
+  background-color: #00ab46;
+  color: #ffffff;
+  border-color: #00ab46;
+}
+.turno-filter-btn.is-inactive {
+  background-color: #ffffff;
+  color: #374151;
+  border-color: #e5e7eb;
+}
+.turno-filter-btn.is-inactive:hover:not(:disabled) {
+  background-color: #f9fafb;
+}
+
+.hub-btn-primary {
+  background-color: #00ab46;
+  color: #ffffff;
+  border: 2px solid #00ab46;
+}
+.hub-btn-primary:hover {
+  background-color: #008f3a;
+  border-color: #008f3a;
+}
+.hub-btn-secondary {
+  background-color: #ffffff;
+  color: #008f3a;
+  border: 2px solid #00ab46;
+}
+
+.page-section {
+  @apply mx-auto max-w-6xl space-y-10 px-4 py-12 sm:px-6 lg:px-8;
+}
+
+.section-card {
+  @apply rounded-2xl border border-gray-200 bg-white p-5 shadow-sm sm:p-6 dark:border-slate-700 dark:bg-slate-900 dark:shadow-none;
+}
+
+.section-heading {
+  @apply text-2xl font-bold text-gray-900 dark:text-slate-100;
+}
+
+.section-lead {
+  @apply mt-1 text-sm text-gray-600 dark:text-slate-300;
+}
+
+/* Dark mode sito pubblico: sync dispositivo + contrasto leggibile */
+@media (prefers-color-scheme: dark) {
+  .site-public {
+    color-scheme: dark;
+    background-color: #020617;
+    color: #f1f5f9;
+  }
+
+  .site-public .bg-white {
+    background-color: #0f172a !important;
+  }
+  .site-public .bg-gray-50,
+  .site-public .bg-slate-50 {
+    background-color: #020617 !important;
+  }
+  .site-public .bg-gray-100,
+  .site-public .bg-slate-100 {
+    background-color: #1e293b !important;
+  }
+
+  .site-public .border-gray-200,
+  .site-public .border-slate-200,
+  .site-public .border-gray-300,
+  .site-public .border-slate-300 {
+    border-color: #334155 !important;
+  }
+
+  .site-public .text-gray-900,
+  .site-public .text-slate-900,
+  .site-public .text-gray-800,
+  .site-public .text-slate-800 {
+    color: #f8fafc !important;
+  }
+  .site-public .text-gray-700,
+  .site-public .text-slate-700 {
+    color: #e2e8f0 !important;
+  }
+  .site-public .text-gray-600,
+  .site-public .text-slate-600,
+  .site-public .text-gray-500,
+  .site-public .text-slate-500 {
+    color: #94a3b8 !important;
+  }
+
+  .site-public .hover\:bg-gray-50:hover,
+  .site-public .hover\:bg-slate-50:hover,
+  .site-public .hover\:bg-gray-100:hover {
+    background-color: #1e293b !important;
+  }
+
+  /* Brand emerald: più chiaro sul fondo scuro */
+  .site-public .bg-emerald-50,
+  .site-public .bg-emerald-50\/40,
+  .site-public .bg-emerald-50\/70,
+  .site-public .bg-emerald-50\/80,
+  .site-public .bg-emerald-100,
+  .site-public .hover\:bg-emerald-50:hover,
+  .site-public .hover\:bg-emerald-50\/40:hover,
+  .site-public .hover\:bg-emerald-100:hover {
+    background-color: #022c22 !important; /* emerald-950 */
+  }
+  /* Gradient “località correlate” e simili: niente blocco bianco in dark */
+  .site-public .from-emerald-50,
+  .site-public .via-white,
+  .site-public .to-sky-50,
+  .site-public [class*='bg-gradient-to'] {
+    background-image: none !important;
+    background-color: #0f172a !important;
+  }
+  /* Badge solidi “Aperta ora”: testo bianco sul verde pieno */
+  .site-public .bg-emerald-600,
+  .site-public .bg-emerald-500 {
+    background-color: #10b981 !important;
+  }
+  .site-public .bg-emerald-600.text-white {
+    color: #ffffff !important;
+  }
+  .site-public .text-emerald-950,
+  .site-public .text-emerald-900,
+  .site-public .text-emerald-800,
+  .site-public .text-emerald-700,
+  .site-public .text-emerald-600,
+  .site-public .hover\:text-emerald-700:hover {
+    color: #a7f3d0 !important; /* emerald-200: leggibile su bg emerald-950 */
+  }
+  .site-public .border-emerald-200,
+  .site-public .border-emerald-300,
+  .site-public .border-emerald-500,
+  .site-public .hover\:border-emerald-300:hover {
+    border-color: #34d399 !important;
+  }
+
+  .site-public .bg-teal-50,
+  .site-public .bg-teal-50\/80,
+  .site-public .hover\:bg-teal-50:hover {
+    background-color: #042f2e !important; /* teal-950 */
+  }
+  .site-public .text-teal-800,
+  .site-public .text-teal-700 {
+    color: #5eead4 !important;
+  }
+  .site-public .border-teal-200 {
+    border-color: #0f766e !important;
+  }
+
+  .site-public .bg-indigo-50,
+  .site-public .bg-indigo-50\/50,
+  .site-public .bg-indigo-50\/40 {
+    background-color: #1e1b4b !important;
+  }
+  .site-public .border-indigo-100,
+  .site-public .border-indigo-200 {
+    border-color: #6366f1 !important;
+  }
+  .site-public .text-indigo-800,
+  .site-public .text-indigo-700 {
+    color: #a5b4fc !important;
+  }
+
+  .site-public .bg-amber-50,
+  .site-public .bg-amber-100 {
+    background-color: #451a03 !important;
+  }
+  .site-public .bg-amber-500,
+  .site-public .bg-amber-400 {
+    background-color: #f59e0b !important;
+    color: #451a03 !important;
+  }
+  .site-public .text-amber-900,
+  .site-public .text-amber-800,
+  .site-public .text-amber-700 {
+    color: #fcd34d !important;
+  }
+
+  .site-public .bg-sky-50,
+  .site-public .bg-sky-50\/50,
+  .site-public .bg-sky-50\/90 {
+    background-color: #082f49 !important; /* sky-950 */
+  }
+  .site-public .text-sky-800,
+  .site-public .text-sky-700 {
+    color: #7dd3fc !important;
+  }
+
+  .site-public .bg-rose-50 {
+    background-color: rgba(136, 19, 55, 0.4) !important;
+  }
+  .site-public .text-rose-700 {
+    color: #fda4af !important;
+  }
+
+  /* Form / input */
+  .site-public input:not([type='checkbox']):not([type='radio']),
+  .site-public textarea,
+  .site-public select {
+    background-color: #0f172a;
+    color: #f8fafc;
+    border-color: #475569;
+  }
+  .site-public input::placeholder,
+  .site-public textarea::placeholder {
+    color: #94a3b8;
+  }
+
+  .turno-filter-btn.is-inactive {
+    background-color: #0f172a;
+    color: #e2e8f0;
+    border-color: #475569;
+  }
+  .turno-filter-btn.is-inactive:hover:not(:disabled) {
+    background-color: #1e293b;
+  }
+  .hub-btn-secondary {
+    background-color: #0f172a;
+    color: #6ee7b7;
+  }
+
+  /* Hero search resta chiaro sul gradient per massimo contrasto */
+  .site-public .relative.overflow-hidden.bg-gradient-to-br form .bg-white,
+  .site-public section.bg-gradient-to-br form .bg-white {
+    background-color: #ffffff !important;
+  }
+  .site-public .relative.overflow-hidden.bg-gradient-to-br form .text-gray-900,
+  .site-public section.bg-gradient-to-br form .text-gray-900,
+  .site-public .relative.overflow-hidden.bg-gradient-to-br form .text-gray-800,
+  .site-public section.bg-gradient-to-br form .text-gray-800 {
+    color: #111827 !important;
+  }
+  .site-public .relative.overflow-hidden.bg-gradient-to-br form input,
+  .site-public section.bg-gradient-to-br form input {
+    background-color: #ffffff !important;
+    color: #111827 !important;
+    border-color: #e5e7eb !important;
+  }
+  .site-public .relative.overflow-hidden.bg-gradient-to-br form input::placeholder,
+  .site-public section.bg-gradient-to-br form input::placeholder {
+    color: #6b7280 !important;
+  }
+  .site-public .relative.overflow-hidden.bg-gradient-to-br form button[type='submit'],
+  .site-public section.bg-gradient-to-br form button[type='submit'] {
+    background-color: #111827 !important;
+    color: #ffffff !important;
+  }
+
+  /* Pill solid sul hero (link e bottone GPS): testo scuro su sfondo chiaro */
+  .site-public a.rounded-full.bg-white\/95,
+  .site-public button.rounded-full.bg-white\/95,
+  .site-public button.rounded-full.bg-white {
+    background-color: rgba(255, 255, 255, 0.95) !important;
+    color: #111827 !important;
+  }
+}
+
+/* Descrizione offerta lavoro: Preflight azzera titoli e liste; ripristina gerarchia */
+.job-description {
+  @apply text-[15px] leading-relaxed text-gray-700 dark:text-slate-300;
+}
+
+.job-description > *:first-child {
+  margin-top: 0;
+}
+
+.job-description p {
+  @apply my-3;
+}
+
+.job-description h1,
+.job-description h2,
+.job-description h3,
+.job-description h4 {
+  @apply mt-7 mb-2 font-bold tracking-tight text-gray-900 dark:text-slate-50;
+  scroll-margin-top: 1.5rem;
+}
+
+.job-description h1 {
+  @apply text-xl;
+}
+
+.job-description h2 {
+  @apply border-b border-emerald-200/80 pb-2 text-base uppercase tracking-wide text-emerald-800 dark:border-emerald-800 dark:text-emerald-300;
+}
+
+.job-description h3,
+.job-description h4 {
+  @apply text-[15px] text-gray-900 dark:text-slate-100;
+}
+
+.job-description ul,
+.job-description ol {
+  @apply my-3 space-y-2 pl-5;
+}
+
+.job-description ul {
+  list-style-type: disc;
+}
+
+.job-description ol {
+  list-style-type: decimal;
+}
+
+.job-description li {
+  @apply pl-1;
+  display: list-item;
+}
+
+.job-description li::marker {
+  @apply text-emerald-600 dark:text-emerald-400;
+}
+
+.job-description strong {
+  @apply font-semibold text-gray-900 dark:text-slate-100;
+}
+
+.job-description a {
+  @apply font-semibold text-emerald-700 underline underline-offset-2 hover:text-emerald-800 dark:text-emerald-300 dark:hover:text-emerald-200;
+}
+
+.job-description hr {
+  @apply my-6 border-gray-200 dark:border-slate-700;
+}

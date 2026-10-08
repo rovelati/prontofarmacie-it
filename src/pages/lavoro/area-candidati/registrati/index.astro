@@ -1,0 +1,28 @@
+---
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import MarketplaceAuthForm from '@/components/marketplace/MarketplaceAuthForm';
+import { getGoogleOAuthConfig } from '@/lib/google-oauth';
+import { siteUrl } from '@/lib/turni';
+
+export const prerender = false;
+
+const title = 'Registrati area candidati | ProntoFarmacie';
+const canonical = `${siteUrl(import.meta.env)}/lavoro/area-candidati/registrati/`;
+const googleAuthEnabled = getGoogleOAuthConfig(siteUrl(import.meta.env)).enabled;
+---
+
+<BaseLayout title={title} description="Registrazione candidati lavoro in farmacia." canonical={canonical} noindex>
+  <div class="mx-auto max-w-5xl px-4 py-12 sm:px-6">
+    <MarketplaceAuthForm
+      client:only="react"
+      role="job_seeker"
+      mode="register"
+      title="Crea account candidato"
+      subtitle="Attivi subito gli alert. CV e profilo condivisibile con le farmacie arrivano nel tuo spazio, con privacy by design."
+      redirectTo="/lavoro/area-candidati/i-miei-alert/"
+      registerHref="/lavoro/area-candidati/registrati/"
+      loginHref="/lavoro/area-candidati/accedi/"
+      googleAuthEnabled={googleAuthEnabled}
+    />
+  </div>
+</BaseLayout>

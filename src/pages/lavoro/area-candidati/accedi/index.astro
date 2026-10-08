@@ -1,0 +1,28 @@
+---
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import MarketplaceAuthForm from '@/components/marketplace/MarketplaceAuthForm';
+import { getGoogleOAuthConfig } from '@/lib/google-oauth';
+import { siteUrl } from '@/lib/turni';
+
+export const prerender = false;
+
+const title = 'Accedi area candidati | ProntoFarmacie';
+const canonical = `${siteUrl(import.meta.env)}/lavoro/area-candidati/accedi/`;
+const googleAuthEnabled = getGoogleOAuthConfig(siteUrl(import.meta.env)).enabled;
+---
+
+<BaseLayout title={title} description="Accesso area candidati lavoro." canonical={canonical} noindex>
+  <div class="mx-auto max-w-5xl px-4 py-12 sm:px-6">
+    <MarketplaceAuthForm
+      client:only="react"
+      role="job_seeker"
+      mode="login"
+      title="Accedi come candidato"
+      subtitle="Gestisci gli alert sulle nuove offerte di lavoro in farmacia."
+      redirectTo="/lavoro/area-candidati/i-miei-alert/"
+      registerHref="/lavoro/area-candidati/registrati/"
+      loginHref="/lavoro/area-candidati/accedi/"
+      googleAuthEnabled={googleAuthEnabled}
+    />
+  </div>
+</BaseLayout>

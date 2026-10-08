@@ -1,0 +1,200 @@
+/* Console admin-test: tema chiaro/scuro sincronizzato col dispositivo */
+.admin-console {
+  color-scheme: light dark;
+  min-height: 100vh;
+  --ac-bg: #f8fafc;
+  --ac-panel: #ffffff;
+  --ac-card: #ffffff;
+  --ac-text: #0f172a;
+  --ac-muted: #64748b;
+  --ac-border: #e2e8f0;
+  --ac-hover: #f1f5f9;
+  --ac-active-bg: #0f172a;
+  --ac-active-fg: #ffffff;
+  --ac-active-muted: #e2e8f0;
+  --ac-warn-bg: #fef9c3;
+  --ac-warn-fg: #854d0e;
+  --ac-success-bg: #ecfdf5;
+  --ac-success-fg: #065f46;
+  --ac-danger-bg: #fff1f2;
+  --ac-danger-fg: #9f1239;
+  --ac-info-bg: #eff6ff;
+  --ac-info-fg: #1e3a8a;
+  --ac-table-head: #f1f5f9;
+  --ac-input-bg: #ffffff;
+
+  /* Allinea i token shadcn usati da Card/Input/Button dentro la console */
+  --background: 210 40% 98%;
+  --foreground: 222 47% 11%;
+  --card: 0 0% 100%;
+  --card-foreground: 222 47% 11%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 222 47% 11%;
+  --muted: 210 40% 96%;
+  --muted-foreground: 215 16% 40%;
+  --accent: 210 40% 96%;
+  --accent-foreground: 222 47% 11%;
+  --border: 214 32% 91%;
+  --input: 214 32% 91%;
+  --ring: 145 100% 34%;
+  --secondary: 210 40% 96%;
+  --secondary-foreground: 222 47% 11%;
+  --destructive: 0 72% 51%;
+  --destructive-foreground: 0 0% 100%;
+
+  background-color: var(--ac-bg);
+  color: var(--ac-text);
+}
+
+@media (prefers-color-scheme: dark) {
+  .admin-console {
+    --ac-bg: #0b1220;
+    --ac-panel: #111827;
+    --ac-card: #1a2332;
+    --ac-text: #f1f5f9;
+    --ac-muted: #a8b6c8;
+    --ac-border: #334155;
+    --ac-hover: #1e293b;
+    --ac-active-bg: #059669;
+    --ac-active-fg: #ecfdf5;
+    --ac-active-muted: #a7f3d0;
+    --ac-warn-bg: #422006;
+    --ac-warn-fg: #fde68a;
+    --ac-success-bg: #064e3b;
+    --ac-success-fg: #a7f3d0;
+    --ac-danger-bg: #4c0519;
+    --ac-danger-fg: #fecdd3;
+    --ac-info-bg: #1e3a8a;
+    --ac-info-fg: #bfdbfe;
+    --ac-table-head: #1e293b;
+    --ac-input-bg: #0f172a;
+
+    --background: 222 47% 7%;
+    --foreground: 210 40% 98%;
+    --card: 217 33% 14%;
+    --card-foreground: 210 40% 98%;
+    --popover: 217 33% 14%;
+    --popover-foreground: 210 40% 98%;
+    --muted: 217 25% 18%;
+    --muted-foreground: 215 20% 72%;
+    --accent: 217 25% 18%;
+    --accent-foreground: 210 40% 98%;
+    --border: 217 20% 28%;
+    --input: 217 20% 28%;
+    --ring: 145 70% 42%;
+    --secondary: 217 25% 18%;
+    --secondary-foreground: 210 40% 98%;
+    --destructive: 0 72% 48%;
+    --destructive-foreground: 0 0% 100%;
+  }
+
+  /* Remap utilità Tailwind hardcoded più comuni nella console */
+  .admin-console .bg-white,
+  .admin-console .bg-slate-50,
+  .admin-console .bg-gray-50 {
+    background-color: var(--ac-card) !important;
+  }
+
+  .admin-console .min-h-screen.bg-slate-50,
+  .admin-console .min-h-screen.bg-gray-50 {
+    background-color: var(--ac-bg) !important;
+  }
+
+  .admin-console .border-slate-200,
+  .admin-console .border-gray-200,
+  .admin-console .border-slate-300,
+  .admin-console .border-gray-300 {
+    border-color: var(--ac-border) !important;
+  }
+
+  .admin-console .border-b,
+  .admin-console .border-r {
+    border-color: var(--ac-border);
+  }
+
+  .admin-console .text-slate-900,
+  .admin-console .text-gray-900,
+  .admin-console .text-slate-800,
+  .admin-console .text-gray-800 {
+    color: var(--ac-text) !important;
+  }
+
+  .admin-console .text-slate-700,
+  .admin-console .text-gray-700,
+  .admin-console .text-slate-600,
+  .admin-console .text-gray-600,
+  .admin-console .text-slate-500,
+  .admin-console .text-gray-500 {
+    color: var(--ac-muted) !important;
+  }
+
+  .admin-console .hover\:bg-slate-100:hover,
+  .admin-console .hover\:bg-gray-100:hover,
+  .admin-console .hover\:bg-slate-50:hover {
+    background-color: var(--ac-hover) !important;
+  }
+
+  .admin-console .bg-slate-100,
+  .admin-console .bg-gray-100 {
+    background-color: var(--ac-table-head) !important;
+  }
+
+  .admin-console .bg-yellow-100 {
+    background-color: var(--ac-warn-bg) !important;
+  }
+  .admin-console .text-yellow-800 {
+    color: var(--ac-warn-fg) !important;
+  }
+
+  .admin-console .bg-amber-50,
+  .admin-console .border-amber-200 {
+    background-color: var(--ac-warn-bg) !important;
+    border-color: #92400e !important;
+  }
+  .admin-console .text-amber-950,
+  .admin-console .text-amber-900,
+  .admin-console .text-amber-700 {
+    color: var(--ac-warn-fg) !important;
+  }
+
+  .admin-console .bg-emerald-50,
+  .admin-console .bg-emerald-50\/60 {
+    background-color: var(--ac-success-bg) !important;
+  }
+  .admin-console .text-emerald-900,
+  .admin-console .text-emerald-800,
+  .admin-console .text-emerald-700 {
+    color: var(--ac-success-fg) !important;
+  }
+  .admin-console .border-emerald-100,
+  .admin-console .border-emerald-200,
+  .admin-console .border-emerald-600 {
+    border-color: #059669 !important;
+  }
+
+  .admin-console .bg-rose-50 {
+    background-color: var(--ac-danger-bg) !important;
+  }
+  .admin-console .text-rose-700 {
+    color: var(--ac-danger-fg) !important;
+  }
+
+  .admin-console input,
+  .admin-console textarea,
+  .admin-console select {
+    background-color: var(--ac-input-bg);
+    color: var(--ac-text);
+    border-color: var(--ac-border);
+  }
+
+  .admin-console input::placeholder,
+  .admin-console textarea::placeholder {
+    color: #94a3b8;
+  }
+
+  /* Nav inattiva più leggibile */
+  .admin-console aside button:not([class*='bg-slate-900']):not([class*='bg-emerald']) {
+    background-color: var(--ac-panel);
+    color: var(--ac-text);
+  }
+}

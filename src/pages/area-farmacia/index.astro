@@ -1,0 +1,173 @@
+---
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import { siteUrl } from '@/lib/turni';
+import '@/styles/marketplace-landing.css';
+
+const title = 'Area farmacia | Gestisci la tua scheda | ProntoFarmacie';
+const description =
+  'Reclama la scheda, aggiorna orari e listino servizi, pubblica offerte di lavoro. Un marketplace pensato per i farmacisti — separato da chi cerca solo una farmacia aperta.';
+const canonical = `${siteUrl(import.meta.env)}/area-farmacia/`;
+const base = siteUrl(import.meta.env);
+
+const jsonLd = [
+  {
+    '@context': 'https://schema.org',
+    '@type': 'WebPage',
+    name: title,
+    description,
+    url: canonical,
+    inLanguage: 'it-IT',
+    isPartOf: { '@type': 'WebSite', name: 'ProntoFarmacie', url: `${base}/` },
+  },
+];
+---
+
+<BaseLayout title={title} description={description} canonical={canonical} jsonLd={jsonLd} noindex>
+  <link
+    rel="stylesheet"
+    href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700&family=Source+Sans+3:wght@400;600;700&display=swap"
+  />
+
+  <div class="mkt-landing">
+    <section class="mkt-hero" aria-labelledby="farmacia-hero-title">
+      <div class="mkt-hero__atmosphere" aria-hidden="true"></div>
+      <div class="mkt-hero__media" aria-hidden="true">
+        <picture>
+          <source srcset="/images/farmacia-hero.webp" type="image/webp" />
+          <img
+            src="/images/farmacia-hero.jpg"
+            alt=""
+            width="933"
+            height="1400"
+            decoding="async"
+            fetchpriority="high"
+          />
+        </picture>
+      </div>
+      <div class="mkt-hero__inner">
+        <p class="mkt-brand">ProntoFarmacie</p>
+        <h1 id="farmacia-hero-title" class="mkt-hero__title">
+          La tua farmacia, gestita da te
+        </h1>
+        <p class="mkt-hero__lead">
+          Orari veri, listino servizi chiaro, offerte di lavoro dove arrivano i candidati — senza mischiare tutto con chi cerca solo una farmacia aperta.
+        </p>
+        <div class="mkt-hero__cta">
+          <a href="/area-farmacia/registrati/" class="mkt-btn mkt-btn--primary">
+            Crea account farmacista
+          </a>
+          <a href="/area-farmacia/accedi/" class="mkt-btn mkt-btn--ghost"> Accedi </a>
+        </div>
+      </div>
+    </section>
+
+    <section class="mkt-section" aria-labelledby="perche-farmacia">
+      <div class="mkt-section__inner">
+        <h2 id="perche-farmacia" class="mkt-section__title">Cosa puoi fare nell’area farmacia</h2>
+        <p class="mkt-section__lead">
+          Non è un altro portale annunci. È il punto in cui controlli come la tua sede appare a pazienti e professionisti.
+        </p>
+        <ul class="mkt-benefits">
+          <li class="mkt-benefit">
+            <span class="mkt-benefit__tag">Disponibile ora</span>
+            <h3>Scheda, orari e contatti</h3>
+            <p>
+              Reclama la farmacia e aggiorna ciò che le persone cercano ogni giorno: apertura, telefono, indirizzo. Meno chiamate inutili, più fiducia.
+            </p>
+          </li>
+          <li class="mkt-benefit">
+            <span class="mkt-benefit__tag">Disponibile ora</span>
+            <h3>Listino servizi</h3>
+            <p>
+              Vaccini, misurazioni, consulenze: prezzi e servizi chiari sulla scheda aiutano chi confronta prima di entrare.
+            </p>
+          </li>
+          <li class="mkt-benefit">
+            <span class="mkt-benefit__tag">Disponibile ora</span>
+            <h3>Assunzioni nella sezione lavoro</h3>
+            <p>
+              Pubblichi annunci in <a href="/lavoro/inserisci-annuncio/" class="font-semibold text-[#007a32] underline">/lavoro/</a>, dove arrivano i candidati — non mescolati alla ricerca turni del pubblico.
+            </p>
+          </li>
+        </ul>
+      </div>
+    </section>
+
+    <section class="mkt-privacy" aria-labelledby="perche-marketplace">
+      <div class="mkt-section__inner mkt-privacy__grid">
+        <div>
+          <p class="mkt-kicker">Marketplace a due lati</p>
+          <h2 id="perche-marketplace" class="mkt-section__title">Perché è diverso per te farmacista</h2>
+          <p class="mkt-section__lead mkt-section__lead--left">
+            Gli utenti cercano una farmacia aperta. I candidati cercano un posto di lavoro. Tu gestisci la scheda e le assunzioni — ciascuno nel percorso giusto.
+          </p>
+        </div>
+        <ul class="mkt-privacy__list">
+          <li>
+            <strong>Visibilità utile, non rumore</strong>
+            <span>Orari aggiornati e servizi leggibili: è ciò che converte chi ti cerca su ProntoFarmacie.</span>
+          </li>
+          <li>
+            <strong>Lavoro separato dai turni</strong>
+            <span>Le offerte restano in /lavoro/: i pazienti non confondono “farmacia aperta” con “cerchiamo personale”.</span>
+          </li>
+          <li>
+            <strong>Tu controlli la scheda</strong>
+            <span>Dopo il collegamento (claim) aggiorni tu i dati. Nessuna modifica silenziosa da parte di terzi.</span>
+          </li>
+          <li>
+            <strong>Dati con finalità chiare</strong>
+            <span>Account per gestire scheda e annunci. Niente rivendita mailing list “farmacisti”.</span>
+          </li>
+        </ul>
+      </div>
+    </section>
+
+    <section class="mkt-section mkt-section--muted" aria-labelledby="come-farmacia">
+      <div class="mkt-section__inner">
+        <h2 id="come-farmacia" class="mkt-section__title">Come iniziare in tre passi</h2>
+        <p class="mkt-section__lead">Pochi minuti. Puoi pubblicare un annuncio anche senza aver ancora completato tutta la scheda.</p>
+        <ol class="mkt-steps">
+          <li>
+            <span class="mkt-steps__n">1</span>
+            <div>
+              <h3>Crea l’account farmacista</h3>
+              <p>Registrazione con email professionale. Poi accedi all’area riservata.</p>
+            </div>
+          </li>
+          <li>
+            <span class="mkt-steps__n">2</span>
+            <div>
+              <h3>Collega la tua farmacia</h3>
+              <p>Cerca la scheda e reclamala. Se l’email coincide, l’approvazione può essere immediata.</p>
+            </div>
+          </li>
+          <li>
+            <span class="mkt-steps__n">3</span>
+            <div>
+              <h3>Aggiorna e pubblica</h3>
+              <p>Orari, listino, offerte lavoro: tutto dal tuo spazio, con revisione dove serve.</p>
+            </div>
+          </li>
+        </ol>
+      </div>
+    </section>
+
+    <section class="mkt-finale" aria-labelledby="finale-farmacia">
+      <div class="mkt-section__inner mkt-finale__box">
+        <h2 id="finale-farmacia" class="mkt-finale__title">Pronto a prendere in mano la tua scheda?</h2>
+        <p class="mkt-finale__lead">
+          Registrati gratis. Se cerchi solo personale, puoi anche partire dall’inserimento annuncio.
+        </p>
+        <div class="mkt-hero__cta mkt-finale__cta">
+          <a href="/area-farmacia/registrati/" class="mkt-btn mkt-btn--primary"> Registra la farmacia </a>
+          <a href="/lavoro/inserisci-annuncio/" class="mkt-btn mkt-btn--ghost"> Pubblica un annuncio </a>
+        </div>
+        <p class="mkt-finale__note">
+          Hai già un account? <a href="/area-farmacia/accedi/">Accedi all’area farmacia</a>
+          · Dashboard: <a href="/area-farmacia/dashboard/">vai alla dashboard</a>
+        </p>
+      </div>
+    </section>
+  </div>
+</BaseLayout>

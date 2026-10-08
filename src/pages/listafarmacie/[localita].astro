@@ -1,0 +1,264 @@
+---
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import HeroPillLink from '@/components/HeroPillLink.astro';
+import HeroSearchForm from '@/components/HeroSearchForm.astro';
+import SectionHero from '@/components/SectionHero.astro';
+import ListaFarmacieMapIsland from '@/components/ListaFarmacieMapIsland';
+import {
+  buildListaDescription,
+  buildListaJsonLd,
+  buildListaTitle,
+  buildTurnoLink,
+  extractTopServices,
+  fetchListaPharmacies,
+  listaPageUrl,
+  resolveListaContext,
+  SSR_LIST_LIMIT,
+} from '@/lib/listafarmacie';
+import {
+  buildListaCityTurnoLink,
+  buildNearbyCityLinks,
+} from '@/lib/listaFarmacieSeo';
+import { PROVINCES_BY_REGION, REGION_NAMES, TOP_PROVINCES } from '@/lib/locationUtils';
+import { PROVINCE_NAME_BY_CODE } from '@/lib/provinceNames';
+import { siteUrl, slugifySegment } from '@/lib/turni';
+
+const { localita } = Astro.params;
+if (!localita) return Astro.redirect('/listafarmacie/italia/', 302);
+
+const ctx = resolveListaContext(localita);
+const items = ctx.scope === 'italia' ? [] : await fetchListaPharmacies(ctx);
+const topServices = extractTopServices(items);
+const title = buildListaTitle(ctx);
+const description = buildListaDescription(ctx, items.length, topServices);
+const canonical = listaPageUrl(import.meta.env, ctx.normalizedSlug || 'italia');
+const jsonLd = buildListaJsonLd(import.meta.env, ctx, items, title, description);
+const turnoLink = buildTurnoLink(import.meta.env, ctx);
+const cityTurnoLink = buildListaCityTurnoLink(import.meta.env, ctx);
+const nearbyCityLinks =
+  ctx.scope === 'italia' ? [] : await buildNearbyCityLinks(import.meta.env, ctx, items);
+const displayItems = items.slice(0, SSR_LIST_LIMIT);
+const mapPoints = items
+  .filter((i) => i.latitude != null && i.longitude != null)
+  .slice(0, 200)
+  .map((i) => ({
+    lat: Number(i.latitude),
+    lng: Number(i.longitude),
+    name: i.name,
+    address: i.address || undefined,
+  }));
+const mapCenter =
+  mapPoints.length > 0
+    ? { lat: mapPoints[0].lat, lng: mapPoints[0].lng }
+    : null;
+const base = siteUrl(import.meta.env);
+---
+
+<BaseLayout title={title} description={description} canonical={canonical} jsonLd={jsonLd}>
+  {ctx.scope === 'italia' ? (
+    <>
+      <SectionHero
+        eyebrow="Lista farmacie"
+        title="Cerca farmacie per città, provincia o regione"
+        description="Inserisci il nome della località per trovare farmacie con contatti, orari e servizi."
+      >
+        <HeroSearchForm action="/listafarmacie/cerca" buttonLabel="Cerca località" />
+        <HeroPillLink slot="footer" href="/farmacie-di-turno/" variant="solid">Farmacie di turno</HeroPillLink>
+        <HeroPillLink slot="footer" href="/farmacie-di-turno/?near=1">Vicino a me</HeroPillLink>
+      </SectionHero>
+
+      <div class="page-section">
+        <div class="section-card">
+          <h2 class="text-lg font-semibold text-gray-900">Province principali</h2>
+          <div class="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-5">
+            {TOP_PROVINCES.map((prov) => (
+              <a href={`/listafarmacie/${prov.slug}/`} class="text-sm font-medium text-emerald-700 hover:underline">
+                {prov.name}
+              </a>
+            ))}
+          </div>
+        </div>
+
+        <section>
+          <h2 class="section-heading">Farmacie per regione</h2>
+          <div class="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            {REGION_NAMES.map((region) => (
+              <a
+                href={`/listafarmacie/${slugifySegment(region)}/`}
+                class="rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm font-semibold text-emerald-800 shadow-sm hover:border-emerald-300 hover:bg-emerald-50"
+              >
+                {region}
+              </a>
+            ))}
+          </div>
+        </section>
+      </div>
+    </>
+  ) : (
+    <div class="page-section">
+        <div class="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm sm:p-8">
+          <p class="text-xs font-semibold uppercase tracking-widest text-emerald-600">Lista farmacie</p>
+          <h1 class="mt-2 text-2xl font-bold text-gray-900 sm:text-3xl">
+            {ctx.scope === 'province'
+              ? `Farmacie in provincia di ${ctx.contextLabel}`
+              : ctx.scope === 'region'
+                ? `Farmacie in ${ctx.contextLabel}`
+                : `Farmacie a ${ctx.contextLabel}`}
+          </h1>
+          <p class="mt-2 text-gray-600">
+            {items.length > 0
+              ? `${items.length} farmacie e parafarmacie in elenco.`
+              : 'Nessuna farmacia trovata per questa località.'}
+          </p>
+          <div class="mt-5 flex flex-wrap gap-3">
+            <a
+              href={turnoLink}
+              class="inline-flex rounded-full bg-emerald-600 px-5 py-2 text-sm font-semibold text-white hover:bg-emerald-700"
+            >
+              Farmacie di turno — {ctx.contextLabel}
+            </a>
+            <a
+              href="/farmacie-di-turno/?near=1"
+              class="inline-flex rounded-full border border-emerald-200 bg-white px-5 py-2 text-sm font-semibold text-emerald-700 hover:bg-emerald-50"
+            >
+              Aperte ora vicino a te
+            </a>
+          </div>
+        </div>
+
+        <div class="mt-6">
+          <h2 class="mb-2 text-lg font-semibold text-gray-900">
+            {ctx.scope === 'province'
+              ? `Elenco farmacie in provincia di ${ctx.contextLabel}`
+              : `Elenco farmacie a ${ctx.contextLabel}`}
+          </h2>
+          <p class="mb-4 text-sm text-gray-600">
+            Mostrando {displayItems.length} di {items.length} farmacie
+          </p>
+          <ul class="grid gap-4">
+            {displayItems.map((item) => (
+              <li class="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
+                <div class="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+                  <div>
+                    <h3 class="text-lg font-semibold text-gray-900">
+                      {item.prontofarmacie_slug ? (
+                        <a href={`/farmacia/${item.prontofarmacie_slug}/`} class="hover:text-emerald-700">
+                          {item.name}
+                        </a>
+                      ) : (
+                        item.name
+                      )}
+                    </h3>
+                    <p class="text-sm text-gray-500">{[item.city, item.province].filter(Boolean).join(' • ')}</p>
+                    {item.pharmacy_type && (
+                      <span
+                        class={`mt-2 inline-flex rounded-full px-3 py-1 text-xs font-semibold ${
+                          item.pharmacy_type === 'parafarmacia'
+                            ? 'bg-amber-50 text-amber-700'
+                            : 'bg-emerald-50 text-emerald-700'
+                        }`}
+                      >
+                        {item.pharmacy_type === 'parafarmacia' ? 'Parafarmacia' : 'Farmacia'}
+                      </span>
+                    )}
+                    {item.address && <p class="mt-2 text-sm text-gray-600">{item.address}</p>}
+                  </div>
+                  <div class="flex shrink-0 flex-wrap gap-2">
+                    {item.phone && (
+                      <a
+                        href={`tel:${String(item.phone).replace(/\D/g, '')}`}
+                        class="rounded-full border border-emerald-200 px-4 py-2 text-sm font-semibold text-emerald-700 hover:bg-emerald-50"
+                        data-ga-event="cta_call"
+                        data-ga-label="chiama_lista"
+                        data-ga-pharmacy={item.prontofarmacie_slug || undefined}
+                      >
+                        Chiama
+                      </a>
+                    )}
+                    {item.prontofarmacie_slug && (
+                      <a
+                        href={`/farmacia/${item.prontofarmacie_slug}/`}
+                        class="rounded-full bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700"
+                        data-ga-event="cta_pharmacy_detail"
+                        data-ga-label="scheda_lista"
+                        data-ga-pharmacy={item.prontofarmacie_slug}
+                      >
+                        Scheda
+                      </a>
+                    )}
+                  </div>
+                </div>
+              </li>
+            ))}
+          </ul>
+        </div>
+
+        {mapPoints.length > 0 && (
+          <div class="mt-6 overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm">
+            <div class="border-b border-gray-100 p-4">
+              <h2 class="text-lg font-semibold text-gray-900">
+                {ctx.scope === 'province'
+                  ? `Mappa farmacie in provincia di ${ctx.contextLabel}`
+                  : `Mappa farmacie a ${ctx.contextLabel}`}
+              </h2>
+            </div>
+            <ListaFarmacieMapIsland client:only="react" points={mapPoints} center={mapCenter} />
+          </div>
+        )}
+
+        {(cityTurnoLink || nearbyCityLinks.length > 0) && (
+          <div class="mt-8 space-y-6">
+            {cityTurnoLink && (
+              <div class="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
+                <h2 class="text-lg font-semibold text-gray-900">Farmacie di turno a {ctx.contextLabel}</h2>
+                <p class="mt-1 text-sm text-gray-600">Trova le farmacie aperte ora a {ctx.contextLabel}</p>
+                <a
+                  href={cityTurnoLink}
+                  class="mt-4 inline-flex rounded-full bg-emerald-600 px-5 py-2 text-sm font-semibold text-white hover:bg-emerald-700"
+                >
+                  Farmacie di turno a {ctx.contextLabel}
+                </a>
+              </div>
+            )}
+
+            {nearbyCityLinks.length > 0 && (
+              <div class="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
+                <h2 class="text-lg font-semibold text-gray-900">
+                  Farmacie nelle città vicine a {ctx.contextLabel}
+                </h2>
+                <p class="mt-1 text-sm text-gray-600">
+                  Consulta l&apos;elenco farmacie nei comuni limitrofi a {ctx.contextLabel}
+                </p>
+                <div class="mt-4 flex flex-wrap gap-2">
+                  {nearbyCityLinks.map((link) => (
+                    <a
+                      href={link.listaHref}
+                      class="rounded-full border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:border-emerald-400 hover:bg-emerald-50"
+                    >
+                      Farmacie a {link.city}
+                    </a>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {ctx.scope === 'region' && ctx.regionLabel && (
+          <div class="mt-8 rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
+            <h2 class="mb-3 text-lg font-semibold text-gray-900">Province in {ctx.regionLabel}</h2>
+            <div class="flex flex-wrap gap-2">
+              {(PROVINCES_BY_REGION[ctx.regionLabel] || []).map((code) => (
+                <a
+                  href={`/listafarmacie/${slugifySegment(PROVINCE_NAME_BY_CODE[code] || code)}/`}
+                  class="rounded-full bg-emerald-50 px-3 py-1 text-sm font-medium text-emerald-800 hover:bg-emerald-100"
+                >
+                  {PROVINCE_NAME_BY_CODE[code] || code}
+                </a>
+              ))}
+            </div>
+          </div>
+        )}
+    </div>
+  )}
+</BaseLayout>

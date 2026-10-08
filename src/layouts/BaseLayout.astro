@@ -1,0 +1,59 @@
+---
+import '@/styles/global.css';
+import GaAnalyticsHead from '@/components/GaAnalyticsHead.astro';
+import GaFunnelTracker from '@/components/GaFunnelTracker';
+import SeoHead from '@/components/SeoHead.astro';
+import SiteHeader from '@/components/SiteHeader.astro';
+import SiteFooter from '@/components/SiteFooter.astro';
+import { buildSiteGraphJsonLd } from '@/lib/seo';
+
+interface Props {
+  title: string;
+  description: string;
+  canonical: string;
+  jsonLd?: Record<string, unknown>[];
+  noindex?: boolean;
+  /** Solo contenuto, senza header/footer sito (es. admin-test). */
+  bare?: boolean;
+}
+
+const { title, description, canonical, jsonLd = [], noindex = false, bare = false } = Astro.props;
+const resolvedJsonLd = noindex || bare ? jsonLd : [...buildSiteGraphJsonLd(import.meta.env), ...jsonLd];
+---
+
+<!doctype html>
+<html lang="it">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="light dark" />
+    <link rel="icon" href="/favicon.ico" sizes="48x48" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="icon" type="image/png" sizes="96x96" href="/favicon-96x96.png" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+    <meta name="apple-mobile-web-app-title" content="ProntoFarmacie" />
+    <meta name="theme-color" content="#00ab46" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#020617" media="(prefers-color-scheme: dark)" />
+    <link rel="manifest" href="/site.webmanifest" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <SeoHead title={title} description={description} canonical={canonical} jsonLd={resolvedJsonLd} noindex={noindex} />
+    <GaAnalyticsHead pageTitle={title} />
+  </head>
+  <body
+    class:list={[
+      'min-h-screen antialiased',
+      bare ? null : 'site-public bg-gray-50 text-gray-900 dark:bg-slate-950 dark:text-slate-100',
+    ]}
+  >
+    {!bare && <SiteHeader />}
+    <main>
+      <slot />
+    </main>
+    {!bare && <SiteFooter />}
+    {!bare && <GaFunnelTracker client:load />}
+  </body>
+</html>

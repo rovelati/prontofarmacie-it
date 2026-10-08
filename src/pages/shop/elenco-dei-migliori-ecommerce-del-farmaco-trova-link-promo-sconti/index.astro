@@ -1,0 +1,55 @@
+---
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import HeroPillLink from '@/components/HeroPillLink.astro';
+import SectionHero from '@/components/SectionHero.astro';
+import { shops } from '@/lib/shop';
+import { siteUrl } from '@/lib/turni';
+
+const title = 'Migliori Ecommerce del Farmaco - Sconti e Link Promo | ProntoFarmacie';
+const description =
+  'Classifica dei migliori e-commerce farmaceutici italiani con link a sconti, promozioni e guide reclami.';
+const canonical = `${siteUrl(import.meta.env)}/shop/elenco-dei-migliori-ecommerce-del-farmaco-trova-link-promo-sconti/`;
+---
+
+<BaseLayout title={title} description={description} canonical={canonical}>
+  <SectionHero
+    eyebrow="Shop farmacia online"
+    title="Migliori ecommerce del farmaco"
+    description="Farmacie online selezionate con link diretti alle promo e alle guide reclami."
+    centered
+  >
+    <HeroPillLink slot="footer" href="/shops/offerte-di-oggi/" variant="solid">Offerte di oggi</HeroPillLink>
+    <HeroPillLink slot="footer" href="/shop-reclami/">Guide reclami</HeroPillLink>
+  </SectionHero>
+
+  <div class="page-section">
+    <div class="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+      {shops.map((shop) => (
+        <article class="flex flex-col rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
+          <div class="flex items-start justify-between gap-3">
+            <h2 class="text-xl font-bold text-gray-900">
+              <a href={`/shop/${shop.slug}/`} class="hover:text-emerald-700">{shop.name}</a>
+            </h2>
+            {shop.rating && (
+              <span class="rounded-lg bg-amber-50 px-2 py-1 text-sm font-bold text-amber-700">{shop.rating}</span>
+            )}
+          </div>
+          <p class="mt-3 flex-1 text-sm text-gray-600 line-clamp-3">{shop.description}</p>
+          <div class="mt-4 space-y-2 text-sm">
+            <a href={shop.shopUrl} target="_blank" rel="noopener noreferrer" class="block font-semibold text-blue-600 hover:underline">
+              Visita shop →
+            </a>
+            {'promoUrl' in shop && shop.promoUrl && (
+              <a href={shop.promoUrl} target="_blank" rel="noopener noreferrer" class="block text-emerald-700 hover:underline">
+                Sezione sconti
+              </a>
+            )}
+            <a href={`/shop/${shop.slug}/offerte-odierne/`} class="block text-gray-700 hover:text-emerald-700">
+              Offerte odierne
+            </a>
+          </div>
+        </article>
+      ))}
+    </div>
+  </div>
+</BaseLayout>

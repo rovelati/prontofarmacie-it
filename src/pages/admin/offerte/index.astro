@@ -1,0 +1,12 @@
+---
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import AdminOfferteApp from '@/components/admin/AdminOfferteApp';
+import { siteUrl } from '@/lib/turni';
+
+const title = 'Console marketplace / CRM | ProntoFarmacie';
+const canonical = `${siteUrl(import.meta.env)}/admin/offerte/`;
+---
+
+<BaseLayout title={title} description="Area riservata CRM utenti, offerte lavoro e claim farmacie." canonical={canonical} noindex>
+  <AdminOfferteApp client:only="react" />
+</BaseLayout>

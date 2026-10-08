@@ -1,0 +1,23 @@
+---
+import BrandMark from '@/components/BrandMark.astro';
+
+interface Props {
+  href?: string;
+  markSize?: number;
+  class?: string;
+  showText?: boolean;
+}
+
+const { href = '/', markSize = 36, class: className = '', showText = true } = Astro.props;
+---
+
+<a href={href} class={`inline-flex items-center gap-2 font-semibold text-gray-900 dark:text-slate-100 ${className}`}>
+  <BrandMark size={markSize} />
+  {
+    showText && (
+      <span>
+        Pronto <span class="text-emerald-600 dark:text-emerald-400">Farmacie</span>
+      </span>
+    )
+  }
+</a>

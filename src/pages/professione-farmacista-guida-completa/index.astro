@@ -1,0 +1,20 @@
+---
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import { siteUrl } from '@/lib/turni';
+
+const title = 'Professione Farmacista — guida completa | ProntoFarmacie';
+const description = 'Panoramica su carriera, formazione e opportunità nella professione del farmacista in Italia.';
+const canonical = `${siteUrl(import.meta.env)}/professione-farmacista-guida-completa/`;
+---
+
+<BaseLayout title={title} description={description} canonical={canonical}>
+  <main class="mx-auto max-w-3xl px-4 py-16">
+    <h1 class="text-3xl font-bold text-gray-900">Professione farmacista</h1>
+    <p class="mt-4 text-gray-700">
+      Guida introduttiva alla professione del farmacista: percorsi formativi, ruoli in farmacia e mercato del lavoro.
+    </p>
+    <a href="/lavoro/" class="mt-8 inline-flex rounded-lg bg-emerald-600 px-6 py-3 font-semibold text-white hover:bg-emerald-700">
+      Vedi offerte di lavoro
+    </a>
+  </main>
+</BaseLayout>

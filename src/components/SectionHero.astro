@@ -1,0 +1,56 @@
+---
+interface Props {
+  eyebrow: string;
+  title: string;
+  description?: string;
+  centered?: boolean;
+  /** Hero più compatto (es. dettaglio offerta lavoro). */
+  compact?: boolean;
+}
+
+const { eyebrow, title, description, centered = false, compact = false } = Astro.props;
+const align = centered ? 'text-center mx-auto' : '';
+const hasMainSlot = Astro.slots.has('default');
+const hasFooterSlot = Astro.slots.has('footer');
+---
+
+<section
+  class:list={[
+    'relative overflow-hidden bg-gradient-to-br from-emerald-600 via-sky-600 to-indigo-700 text-white',
+    compact ? 'py-6 sm:py-10' : 'py-10 sm:py-16',
+  ]}
+>
+  <div class={`relative mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 ${centered ? 'text-center' : ''}`}>
+    <p class={`text-xs font-semibold uppercase tracking-widest text-white/80 ${align}`}>{eyebrow}</p>
+    <h1
+      class:list={[
+        'max-w-3xl break-words font-extrabold leading-tight',
+        compact ? 'mt-2 text-xl sm:mt-3 sm:text-3xl' : 'mt-3 text-2xl sm:mt-4 sm:text-4xl',
+        centered ? 'mx-auto' : null,
+      ]}
+    >
+      {title}
+    </h1>
+    {description && (
+      <p
+        class:list={[
+          'max-w-2xl leading-relaxed text-white/90',
+          compact ? 'mt-2 text-sm sm:text-base' : 'mt-3 text-base sm:mt-4 sm:text-lg',
+          centered ? 'mx-auto' : null,
+        ]}
+      >
+        {description}
+      </p>
+    )}
+    {hasMainSlot && (
+      <div class={`mt-6 sm:mt-8 ${centered ? 'mx-auto max-w-2xl' : 'max-w-2xl'}`}>
+        <slot />
+      </div>
+    )}
+    {hasFooterSlot && (
+      <div class={`mt-5 sm:mt-6 ${centered ? 'flex flex-wrap justify-center gap-2 sm:gap-3' : 'flex flex-wrap gap-2 sm:gap-3'}`}>
+        <slot name="footer" />
+      </div>
+    )}
+  </div>
+</section>
